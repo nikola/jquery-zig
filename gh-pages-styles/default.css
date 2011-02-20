@@ -40,7 +40,7 @@ body {
     height: 48px;
     z-index: 1000;
     
-    background-color: #8a9038;
+    background-color: #943848;
     opacity: 0.9;
     }
 
@@ -126,7 +126,7 @@ a[name] {
     padding-bottom: 8px;
     margin-bottom: 4px;
     margin-top: 32px;
-    color: #187428;
+    color: #841828;
     }
 
 a[name]:before {
