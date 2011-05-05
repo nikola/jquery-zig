@@ -634,22 +634,9 @@
                 } else if ($.browser.msie) {
                     property = "-ms-filter";
                     template = "progid:DXImageTransform.Microsoft.gradient(startColorstr='{start}',endColorstr='{stop}')";
-                } else if ($.browser.opera) {
-                    var NS = "http://www.w3.org/2000/svg";
-                    if (!!document.createElementNS 
-                            && !!document.createElementNS(NS, "svg").createSVGRect) {
-                        property = "background";
-                        template = "url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20version"
-                                 + "%3D%221.0%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22gradient%22%20x1%3D%220%22%20y1"
-                                 + "%3D%220%22%20x2%3D%220%22%20y2%3D%22100%25%22%3E%3Cstop%20offset%3D%220%25%22%20styl"
-                                 + "e%3D%22stop-color%3A%20{start}%3B%22/%3E%3Cstop%20offset%3D%22100%25%22%20style%3D%2"
-                                 + "2stop-color%3A%20{stop}%3B%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20x%3D%220%"
-                                 + "22%20y%3D%220%22%20fill%3D%22url%28%23gradient%29%22%20width%3D%22100%25%22%20height"
-                                 + "%3D%22100%25%22/%3E%3C/svg%3E)";
-    
-                        base.options.canvasGradientStart = encodeURIComponent(base.options.canvasGradientStart);
-                        base.options.canvasGradientStop = encodeURIComponent(base.options.canvasGradientStop);
-                    }
+                } else if ($.browser.opera && $.browser.version.replace(/\./g, "") >= 1110) {
+                    property = "background";
+                    template = "-o-linear-gradient(top,{start},{stop})";
                 }
                 
                 if (template != null) {   
