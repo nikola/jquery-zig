@@ -638,8 +638,13 @@
                     property = "background";
                     template = "-webkit-gradient(linear,left top,left bottom,from({start}),to({stop}))";
                 } else if ($.browser.msie) {
-                    property = "-ms-filter";
-                    template = "progid:DXImageTransform.Microsoft.gradient(startColorstr='{start}',endColorstr='{stop}')";
+                    if ($.browser.version == "8.0") {
+                        property = "-ms-filter";
+                        template = '"progid:DXImageTransform.Microsoft.gradient(startColorstr={start},endColorstr={stop})"';    
+                    } else if ($.browser.version == "7.0") {
+                        property = "filter";
+                        template = 'progid:DXImageTransform.Microsoft.gradient(startColorstr={start},endColorstr={stop})';
+                    }
                 } else if ($.browser.opera && $.browser.version.replace(/\./g, "") >= 1110) {
                     property = "background";
                     template = "-o-linear-gradient(top,{start},{stop})";
