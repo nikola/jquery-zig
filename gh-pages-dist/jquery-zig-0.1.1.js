@@ -649,8 +649,10 @@
                 } else if ($.browser.msie) {
                     // if ($.browser.version == "8.0") {
                     //      property = "-ms-filter";
-                    property = "filter";
-                    template = '"progid:DXImageTransform.Microsoft.gradient(startColorstr={start},endColorstr={stop})"';    
+                    base.$node.get(0).style.filter = '"progid:DXImageTransform.Microsoft.gradient(startColorstr={' + base.options.canvasGradientStart + '},endColorstr={' + base.options.canvasGradientStop + '})"';
+                    return;
+                    // property = "filter";
+                    // template = '"progid:DXImageTransform.Microsoft.gradient(startColorstr={start},endColorstr={stop})"';    
                     /* else if ($.browser.version == "7.0") {
                         property = "filter";
                         template = '"progid:DXImageTransform.Microsoft.gradient(startColorstr={start},endColorstr={stop})"';
