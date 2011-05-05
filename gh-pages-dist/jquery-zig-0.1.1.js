@@ -347,9 +347,18 @@
          * Set up cursor controls.
          */
         function _wireMouseControls() {
-            var cursor = $.browser.opera ? "crosshair" : "none";
+            /*
+             * Try to hide the default cursor.
+             */
+            var cursor;
+            if ($.browser.opera) {
+                cursor = "crosshair";
+            } else if ($.browser.msie) {
+                cursor = "url(data:image/x-win-bitmap;base64,AAACAAEAICAAAAAAAAAwAQAAFgAAACgAAAAgAAAAQAAAAAEAAQAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8=)"
+            }
+            
             base.$node
-                .css("cursor", cursor)                
+                .css("cursor", cursor || "none")                
                 .bind({
                     "mousemove.zig": _handleMouseMove 
                   , "mouseover.zig": _handleMouseOver
