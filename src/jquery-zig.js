@@ -1,5 +1,5 @@
 /*!
- * jquery-zig Plugin Version 0.1.0-20110505
+ * jquery-zig Plugin Version 0.1.1-20110506
  * Copyright 2011, Nikola Klaric.
  * 
  * https://github.com/nikola/jquery-zig
@@ -356,11 +356,17 @@
                   , "mouseout.zig":  _handleMouseOut                        
                 });
             
-            var handle;
+            var handle, element = base.$node.get(0);
             if ($.browser.mozilla && parseFloat($.browser.version.substr(0, 3)) * 10 >= 19) {
                 handle = "DOMMouseScroll";
             }
-            base.$node.get(0).addEventListener(handle || "mousewheel", _handleMousePan, false);
+            if (element.addEventListener) {
+                element.addEventListener(handle || "mousewheel", _handleMousePan, false);
+            } else if (element.attachEvent) {
+                element.attachEvent("onmousewheel", function () { 
+                    return _handleMousePan.call(element, window.event);
+                });
+            }
         }
         
 
