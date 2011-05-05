@@ -6,7 +6,7 @@
         
         <title>jquery-zig plugin</title>
         
-        <meta name="description" content="A jQuery plugin ... All major browsers supported.">
+        <meta name="description" content="A jQuery plugin that draws interactive line chart diagrams. All modern browsers supported.">
         <meta name="author" content="Nikola Klaric">
         
         <link rel="stylesheet" href="gh-pages-styles/reset.css">
@@ -17,7 +17,7 @@
         <div id="wrapper-top">
             <div id="header">
                 <div id="masthead">
-                    jquery-zig plugin<span id="head-version">0.1.0</span><span id="menu"><a href="#about">About</a> | <a href="#examples">Examples</a> | <a href="#usage">Usage</a> | <a href="#license">License</a> | <a href="#download">Download</a></span>
+                    jquery-zig plugin<span id="head-version">0.1.0</span><span id="menu"><a href="#about">About</a> | <a href="#demo">Demo</a> | <a href="#usage">Usage</a> | <a href="#license">License</a> | <a href="#download">Download</a></span>
                 </div>
             </div>
             
@@ -25,31 +25,245 @@
                 <div id="content">
                     <a name="about">About</a>
                     <p>
-                        jquery-zig is a plugin for jQuery ...
+                        jquery-zig is a plugin for jQuery that draws interactive line chart diagrams. All modern browsers supported.
                     </p>
                     <br>
                     <p>
-                        Author: <a href="https://github.com/nikola">Nikola Klaric (github.com/nikola)</a>
+                        <strong>Author</strong> <a href="https://github.com/nikola">Nikola Klaric (github.com/nikola)</a>
                     </p>
                     <p>
-                        Latest release version: 0.1.0-yyyymmdd
+                        <strong>Source</strong> <a href="https://github.com/nikola/jquery-zig">https://github.com/nikola/jquery-zig</a>
                     </p>
-                    <p>Successfully tested on: ...</p>
+                    <p>
+                        <strong>Latest release version</strong> 0.1.0-20110505
+                    </p>
+                    <p>
+                        <strong>License</strong> <a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GNU General Public License (GPL) Version 2</a>
+                    </p>
+                    <p>
+                        <strong>Size</strong> 80.11K <a href="https://github.com/nikola/jquery-zig/blob/master/src/jquery-zig.js">source code</a> (8.58K <a href="http://closure-compiler.appspot.com/code/jsc4ca4a1203c3f92058cb0a5d36398dddf/default.js"> whitespace-stripped, gzipped</a>)
+                    </p>
                     
-                    <a name="examples">Examples</a>
-                    <p>
-                        ...
-                    </p>
+                    <a name="demo">Demo</a>
+                    
+                    <div id="demo-container">
+                        
+                        <!-- Demonstrate inline HTML sample values. -->
+                        <ol id="demo-chart-competitors" class="demo-chart">
+                            <ol id="team-red">
+                                <li>120</li>
+                                <li>139</li>
+                                <li>152</li>
+                                <li>143</li>
+                                <li>142</li>
+                                <li>129</li>
+                                <li>130</li>
+                                <li>117</li>
+                                <li>94</li>
+                                <li>115</li>
+                                <li>106</li>
+                                <li>109</li>
+                                <li>126</li>
+                                <li>119</li>
+                                <li>136</li>
+                                <li>113</li>
+                                <li>90</li>
+                                <li>97</li>
+                                <li>90</li>
+                                <li>83</li>
+                                <li>100</li>
+                                <li>109</li>
+                                <li>84</li>
+                                <li>81</li>
+                                <li>100</li>
+                                <li>107</li>
+                                <li>112</li>
+                                <li>109</li>
+                                <li>92</li>
+                                <li>105</li>
+                                <li>128</li>
+                                <li>121</li>
+                                <li>128</li>
+                                <li>141</li>
+                                <li>116</li>
+                                <li>95</li>
+                                <li>110</li>
+                                <li>125</li>
+                                <li>110</li>
+                                <li>103</li>
+                                <li>108</li>
+                                <li>119</li>
+                                <li>122</li>
+                                <li>139</li>
+                                <li>138</li>
+                                <li>135</li>
+                                <li>116</li>
+                                <li>119</li>
+                                <li>104</li>
+                                <li>97</li>
+                                <li>102</li>
+                                <li>105</li>
+                                <li>98</li>
+                                <li>115</li
+                                ><li>124</li>
+                                <li>101</li>
+                                <li>100</li>
+                                <li>121</li>
+                                <li>104</li>
+                                <li>105</li>
+                                <li>84</li>
+                                <li>85</li>
+                                <li>106</li>
+                                <li>101</li>
+                                <li>96</li>
+                                <li>115</li>
+                                <li>120</li>
+                                <li>121</li>
+                                <li>140</li>
+                                <li>133</li>
+                                <li>156</li>
+                                <li>175</li>
+                                <li>184</li>
+                                <li>187</li>
+                                <li>162</li>
+                                <li>173</li>
+                                <li>166</li>
+                                <li>159</li>
+                                <li>138</li>
+                                <li>155</li>
+                            </ol>
+                            <ol id="team-blue">
+                               <li>50</li>
+                               <li>56</li>
+                               <li>46</li>
+                               <li>60</li>
+                               <li>54</li>
+                               <li>46</li>
+                               <li>48</li>
+                               <li>40</li>
+                               <li>50</li>
+                               <li>46</li>
+                               <li>44</li>
+                               <li>58</li>
+                               <li>52</li>
+                               <li>40</li>
+                               <li>50</li>
+                               <li>64</li>
+                               <li>56</li>
+                               <li>68</li>
+                               <li>80</li>
+                               <li>94</li>
+                               <li>82</li>
+                               <li>88</li>
+                               <li>78</li>
+                               <li>76</li>
+                               <li>76</li>
+                               <li>74</li>
+                               <li>88</li>
+                               <li>74</li>
+                               <li>68</li>
+                               <li>76</li>
+                               <li>74</li>
+                               <li>74</li>
+                               <li>70</li>
+                               <li>60</li>
+                               <li>52</li>
+                               <li>52</li>
+                               <li>58</li>
+                               <li>66</li>
+                               <li>68</li>
+                               <li>66</li>
+                               <li>70</li>
+                               <li>78</li>
+                               <li>70</li>
+                               <li>58</li>
+                               <li>54</li>
+                               <li>60</li>
+                               <li>74</li>
+                               <li>72</li>
+                               <li>62</li>
+                               <li>74</li>
+                               <li>88</li>
+                               <li>88</li>
+                               <li>96</li>
+                               <li>94</li>
+                               <li>84</li>
+                               <li>94</li>
+                               <li>96</li>
+                               <li>106</li>
+                               <li>112</li>
+                               <li>110</li>
+                               <li>108</li>
+                               <li>100</li>
+                               <li>104</li>
+                               <li>92</li>
+                               <li>82</li>
+                               <li>96</li>
+                               <li>96</li>
+                               <li>104</li>
+                               <li>100</li>
+                               <li>104</li>
+                               <li>118</li>
+                               <li>124</li>
+                               <li>138</li>
+                               <li>130</li>
+                               <li>128</li>
+                               <li>134</li>
+                               <li>120</li>
+                               <li>124</li>
+                               <li>130</li>
+                               <li>122</li>
+                            </ol>
+                        </ol>
+                        
+                        <!-- Demonstrate custom chrome. -->
+                        <div id="demo-chart-moon" class="demo-chart"></div>
+                        
+                        <!-- Demonstrate chart synchronization. -->
+                        <div id="demo-chart-synced-a" class="demo-chart"></div>
+                        <div id="demo-chart-synced-b" class="demo-chart"></div>
+                    
+                    </div>
                     
                     <a name="usage">Usage</a>
                     
                     <p>
-                        ...
+                        Step 1. Include the jQuery library in your page, e.g.
+                    </p>
+                    <blockquote>
+                        &lt;script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js"&gt;&lt;/script&gt;
+                    </blockquote>
+                    
+                    <p>
+                        Step 2. Include the jquery-zig plugin in your page, e.g.
+                    </p>
+                    <blockquote>
+                        &lt;script src="path/to/javascript/files/jquery-zig.js"&gt;&lt;/script&gt;
+                    </blockquote>
+                    
+                    <p>
+                        Step 3. Write a box-model container for your chart, e.g.
+                    </p>
+                    <blockquote>
+                        &lt;div id=&quot;myChart&gt;&lt;/div&gt;
+                    </blockquote>
+                    
+                    <p>
+                        Step 4. In your Javascript code, select your element(s) with jQuery and call 
+                        the .zig() method on the result, e.g.
+                    </p>
+                    <blockquote>
+                        $(&quot;#myChart&quot;).zig();
+                    </blockquote>
+                    
+                    <br>
+                    <p>
+                        (Full documentation to be published soon ...)
                     </p>
                     
                     <a name="license">License</a>
                     <p>
-                        The jquery-tabloid plugin is licensed under the GNU General Public License (GPL) Version 2.
+                        The jquery-zig plugin is licensed under the <a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GNU General Public License (GPL) Version 2</a>.
                     </p>
                     <p>
                         If you are using this plugin for commercial purposes, please consider
@@ -343,8 +557,8 @@ POSSIBILITY OF SUCH DAMAGES.</pre>
                         Latest revision from <a href="https://github.com/nikola/jquery-zig">master</a>:
                     </p> 
                     <ul>
-                        <li><a href="">Download .zip</a></li>
-                        <li><a href="">Download .tar.gz</a></li>
+                        <li><a href="http://goo.gl/nEZal">Download .zip</a></li>
+                        <li><a href="http://goo.gl/IJ9Li">Download .tar.gz</a></li>
                     </ul>                            
                 </div>
             </div>
@@ -356,10 +570,235 @@ POSSIBILITY OF SUCH DAMAGES.</pre>
             <div id="footer">Copyright 2011 Nikola Klaric. All rights reserved.</div>
         </div>  
         
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.0/jquery.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js"></script>
         <script src="gh-pages-dist/jquery-zig-0.1.0.js"></script>
         <script>
-        
+            /* 
+             * Poor man's PRNG.
+             */
+            var rand = new function () {
+                var x = 13041984, mask = Math.pow(2, 31) - 1;
+                return function () {
+                    x = ((1103515245 * x + 12345) >>> 0) & mask;
+                    return x;
+                }
+            };  
+            
+            $(document).ready(function () {
+                
+                $("#demo-chart-competitors").zig({
+                    unit: "$"
+                  , verticalGridSegments: 10
+                  , borderColor: "transparent"
+                  , overflow: "clip"
+                  , graphs: [
+                        {
+                            id: "team-red"
+                          , lineColor: "#e60073"
+                          , fillColor: "none"
+                        }
+                      , {
+                            id: "team-blue"
+                          , lineColor: "#0073e6"
+                          , fillColor: "none"
+                        }
+                    ]
+                });
+                
+                
+                $("#demo-chart-moon").zig({
+                    unit: "mm"
+                  , showVerticalGrid: false
+                  , canvasFillStyle: "gradient"                  
+                  , canvasColor: "#000"
+                  , borderColor: "transparent"
+                  , scrollbarColor: "#000"
+                  , scrollbarHeight: 12
+                  , crosshairColor: "#fff"
+                  , coordinatesColor: "#fff"
+                  , scaleColor: "#11aa44"
+                  , crosshairColor: "#aa1144"
+                  , highlightBackgroundColor: "#fff"
+                  , graphs: [
+                        {
+                            id: "test1"
+                          , lineColor: "#888"
+                          , fillColor: "#888"
+                          , highlightTextColor: "#000"
+                          , highlightBackgroundColor: "#888"
+                          , highlightBorderColor: "#000"
+                        }
+                      , {
+                            id: "test2"
+                          , lineColor: "#fff"
+                          , fillColor: "#aaa"
+                          , highlightTextColor: "#000"
+                          , highlightBackgroundColor: "#aaa"
+                        }
+                    ]
+                });      
+                
+                $("#demo-chart-synced-a").zig({
+                    unit: "kbps"
+                  , height: 300
+                  , graphs: [
+                        {
+                            id: "line-red"
+                          , lineColor: "#ca1e36"
+                          , fillColor: "none"
+                        }
+                      , {
+                            id: "line-orange"
+                          , lineColor: "#daa520"
+                          , fillColor: "none"
+                        }
+                      , {
+                            id: "line-green"
+                          , lineColor: "#4cbd1c"
+                          , fillColor: "none"
+                        }
+                      , {
+                            id: "line-blue"
+                          , lineColor: "#1b71b5"
+                          , fillColor: "none"
+                        }
+                      , {
+                            id: "line-violet"
+                          , lineColor: "#9450e5"
+                          , fillColor: "none"
+                        }
+                    ]
+                });          
+                
+                $("#demo-chart-synced-b").zig({
+                    unit: "ms"
+                  , defaultRenderPath: "html"
+                  , height: 300
+                  , graphs: [
+                        {
+                            id: "line-red"
+                          , lineColor: "#ca1e36"
+                          , fillColor: "none"
+                        }
+                      , {
+                            id: "line-orange"
+                          , lineColor: "#daa520"
+                          , fillColor: "none"
+                        }
+                      , {
+                            id: "line-green"
+                          , lineColor: "#4cbd1c"
+                          , fillColor: "none"
+                        }
+                      , {
+                            id: "line-blue"
+                          , lineColor: "#1b71b5"
+                          , fillColor: "none"
+                        }
+                      , {
+                            id: "line-violet"
+                          , lineColor: "#9450e5"
+                          , fillColor: "none"
+                        }
+                    ]
+                });
+                
+                var buffer = [120];
+                for (var c = 0; c < 79; c++) {
+                    buffer.push((rand() % 50) - 25 + buffer[buffer.length - 1]);
+                }
+                
+                
+                var buffer = [50];
+                for (var c = 0; c < 79; c++) {
+                    buffer.push((rand() % 30) - 14 + buffer[buffer.length - 1]);
+                }
+                
+                
+                
+                var buffer = [170], labels = [];
+                for (var c = 0; c < 159; c++) {
+                    buffer.push((rand() % 25) - 12 + buffer[buffer.length - 1]);
+                    var date = new Date(c * 3600 * 1000 * 24);
+                    labels.push((date.getUTCMonth() + 1) + "/" + date.getUTCDate() + "/" + date.getUTCFullYear());
+                }
+                
+                $("#demo-chart-moon").zig("addSamples", "test1", buffer, labels);
+    
+                var buffer = [330];
+                for (var c = 0; c < 159; c++) {
+                    buffer.push((rand() % 30) - 15 + buffer[buffer.length - 1]);
+                }
+                
+                $("#demo-chart-moon").zig("addSamples", "test2", buffer);
+                
+                
+                
+                
+                var buffer = [1500];
+                for (var c = 0; c < 299; c++) {
+                    buffer.push((rand() % 500) - 240 + buffer[buffer.length - 1]);
+                }
+                $("#demo-chart-synced-a").zig("addSamples", "line-red", buffer);
+                
+                var buffer = [3500];
+                for (var c = 0; c < 299; c++) {
+                    buffer.push((rand() % 500) - 230 + buffer[buffer.length - 1]);
+                }
+                $("#demo-chart-synced-a").zig("addSamples", "line-orange", buffer);
+                
+                var buffer = [2500];
+                for (var c = 0; c < 299; c++) {
+                    buffer.push((rand() % 500) - 240 + buffer[buffer.length - 1]);
+                }
+                $("#demo-chart-synced-a").zig("addSamples", "line-green", buffer);
+                
+                var buffer = [3000];
+                for (var c = 0; c < 299; c++) {
+                    buffer.push((rand() % 500) - 250 + buffer[buffer.length - 1]);
+                }
+                $("#demo-chart-synced-a").zig("addSamples", "line-blue", buffer);
+                
+                var buffer = [4000];
+                for (var c = 0; c < 299; c++) {
+                    buffer.push((rand() % 500) - 250 + buffer[buffer.length - 1]);
+                }
+                $("#demo-chart-synced-a").zig("addSamples", "line-violet", buffer);
+                
+                
+                var buffer = [450];
+                for (var c = 0; c < 299; c++) {
+                    buffer.push((rand() % 50) - 24 + buffer[buffer.length - 1]);
+                }
+                $("#demo-chart-synced-b").zig("addSamples", "line-red", buffer);
+                
+                var buffer = [350];
+                for (var c = 0; c < 299; c++) {
+                    buffer.push((rand() % 50) - 24 + buffer[buffer.length - 1]);
+                }
+                $("#demo-chart-synced-b").zig("addSamples", "line-orange", buffer);
+                
+                var buffer = [450];
+                for (var c = 0; c < 299; c++) {
+                    buffer.push((rand() % 50) - 25 + buffer[buffer.length - 1]);
+                }
+                $("#demo-chart-synced-b").zig("addSamples", "line-green", buffer);
+                
+                var buffer = [350];
+                for (var c = 0; c < 299; c++) {
+                    buffer.push((rand() % 50) - 24 + buffer[buffer.length - 1]);
+                }
+                $("#demo-chart-synced-b").zig("addSamples", "line-blue", buffer);
+                
+                var buffer = [350];
+                for (var c = 0; c < 299; c++) {
+                    buffer.push((rand() % 50) - 24 + buffer[buffer.length - 1]);
+                }
+                $("#demo-chart-synced-b").zig("addSamples", "line-violet", buffer);
+                
+                $("#demo-chart-synced-a").zig("synchronize", "#demo-chart-synced-b");
+            
+            });              
         </script>
     </body>
     

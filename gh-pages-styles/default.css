@@ -1,8 +1,5 @@
 /**
- * Color schemes
- * 
- * green: http://colorschemedesigner.com/#2o5221BsOw0w0
- * blue: http://colorschemedesigner.com/#3D5221BsOw0w0
+ *
  */
 
 html, body {
@@ -38,10 +35,13 @@ body {
     top: 0;
     width: 100%;
     height: 48px;
-    z-index: 1000;
+    z-index: 10000;
     
     background-color: #943848;
+    
     opacity: 0.9;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=90)";
+    filter: alpha(opacity=90);
     }
 
 #masthead {
@@ -137,7 +137,7 @@ a[name]:before {
 }
 
 p a[href], p a[href]:link, p a[href]:visited {
-    border-bottom: 1px dotted #6d6f71;
+    border-bottom: 1px dotted #716d6f;
     text-decoration: none;
     color: #444;
     }
@@ -172,41 +172,44 @@ ul {
     
 li a, li a[href]:link, li a[href]:visited {
     font: 13px/24px "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
-    color: #304070;
-    border-bottom: 1px dotted #6d6f71;
+    color: #703040;
+    border-bottom: 1px dotted #716d6f;
     text-decoration: none;
     }        
 
 li a[href]:hover, li a[href]:active {
     border-bottom-style: solid;
     }
+    
 /*
- * Example styles.
+ * Demo styles.
  */
 
-textarea {
-    width: 512px;
-    color: #444;
-    resize: none;
+#demo-container {
+    margin-top: 16px;
+    zoom: 1;
+    *-ms-inject: expression(this.x||(this.innerHTML+='<br\ style="clear:both;font:0/0">',this.x=1));
     }
 
-#demo-textarea-01 {
-    border: 1px solid #99bb99;
-    background-color: #f1f9f5;
-    padding: 2px;
-    font: 14px Cambria, Georgia, serif;    
-    }    
-    
-#demo-textarea-02 {
-    border: 2px solid;
-    border-top-color: #9999bb;
-    border-left-color: #9999bb;
-    border-right-color: #bb99bb;
-    border-bottom-color: #bb99bb;
-    background-color: #f1f5f9;
-    padding: 4px 5px 6px 7px;
-    font: 16px Baskerville, Garamond, Palatino, "Palatino Linotype", "Hoefler Text", "Times New Roman", serif;
-    
-    min-height: 100px;
-    }    
+#demo-container:before, #demo-container:after {
+    content: "";
+    display: table;
+    }
+
+#demo-container:after {
+    clear: both;
+    }
+
+.demo-chart {
+    display: inline-block;
+    float: left;
+    }                
+
+#demo-chart-moon, #demo-chart-synced-b {
+    margin-left: 16px;
+    }
+
+#demo-chart-synced-a, #demo-chart-synced-b {
+    margin-top: 16px;
+    }
                
