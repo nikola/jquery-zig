@@ -1,0 +1,28 @@
+/**
+ * 
+ */
+
+html {
+    max-width: 1024px;
+    margin: 0 auto;
+    position: relative;
+    }
+
+body {
+    margin: 16px;
+    background-color: #fff;
+    }
+
+.demo-chart {
+    display: inline-block;
+    float: left;
+    }                
+
+#demo-chart-moon, #demo-chart-synced-b {
+    margin-left: 16px;
+    }
+
+#demo-chart-synced-a, #demo-chart-synced-b {
+    margin-top: 16px;
+    }
+    
