@@ -16,7 +16,7 @@
 (function ($) {
     
     /**
-     * A jQuery plugin that draws interactive line charts. 
+     * A jQuery plugin that draws interactive line chart diagrams. 
      * All modern browsers supported.
      */
     $.zig = function (node, options) {
