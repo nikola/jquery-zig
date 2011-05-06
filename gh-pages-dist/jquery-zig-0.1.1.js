@@ -1166,8 +1166,8 @@
                     x = Math.floor(event.pageX - offset.left),
                     y = Math.floor(event.pageY - offset.top);
 
-                /* Compensate for Opera's hotspot offsets. */    
-                if ($.browser.opera) {
+                /* Compensate for hotspot offsets. */    
+                if ($.browser.opera || $.browser.msie) {
                     x--, y--;
                 }
                     
