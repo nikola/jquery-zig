@@ -1249,6 +1249,8 @@
                 }
             } else if ($.browser.opera && "wheelDelta" in event) {
                 var delta = event.wheelDelta / -12;
+            } else if ($.browser.msie && "wheelDelta" in event) {
+                var delta = event.wheelDelta / -12;
             } else {
                 return;
             }
