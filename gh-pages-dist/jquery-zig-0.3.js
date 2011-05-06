@@ -389,7 +389,8 @@
             base.graphContainer[id] = $("<ul>", {
                 css: {
                     listStyle: "none"
-                  , zIndex: 1000 + base.planeIndex[id] 
+                  , zIndex: 1000 + base.planeIndex[id]
+                  , position: "absolute"
                 }
             }).appendTo(base.$node); 
         }
@@ -402,7 +403,7 @@
             var canvasSegment = $("<li>", {
                 css: {
                     display: "inline-block"
-                  , position: "absolute"
+                  , position: "relative"
                 }
             }).appendTo(base.graphContainer[id]);
                 
@@ -1636,6 +1637,8 @@
                 addCount = samples.length,
                 continueIndex = sampleCount - 1,
                 needsRedraw = false, hasOverflow = false;
+
+            console.log(sampleCount, addCount, continueIndex);
 
             /*
              * ...
