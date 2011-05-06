@@ -1,5 +1,5 @@
 /*!
- * jquery-zig Plugin Version 0.1.1-20110506
+ * jquery-zig Plugin Version 0.2-20110506
  * Copyright 2011, Nikola Klaric.
  * 
  * https://github.com/nikola/jquery-zig
@@ -118,6 +118,7 @@
           , lastPageY: null
             
             /* State of custom cursor. */
+          , useCustomCursor: true
           , cursors: null
           , horizontalCrosshairCursor: null
           , verticalCrosshairCursor: null
@@ -203,14 +204,21 @@
             _extractSamples();
             
             /* Render basic chrome. */
-            base.$node.css({
+            var styles = {
                 position: "relative"
               , width: base.options.width + "px"
               , height: base.options.height + "px"
               , border: "1px solid " + ((base.options.borderColor == "transparent") ?
                     base.options.backgroundColor : base.options.borderColor) 
               , overflow: "hidden"
-            });  
+            };  
+            if ($.browser.msie || $.browser.opera) {
+                styles.cursor = "crosshair";
+                base.useCustomCursor = false;                
+            } else {
+                styles.cursor = "none";
+            }
+            base.$node.css(styles); 
 
             /* Initialize and render graph containers as defined in init parameters. */
             _createGraphs();
@@ -347,18 +355,11 @@
          * Set up cursor controls.
          */
         function _wireMouseControls() {
-            var cursor;
-            if ($.browser.opera || $.browser.msie) {
-                cursor = "crosshair";
-            }
-            
-            base.$node
-                .css("cursor", cursor || "none")                
-                .bind({
-                    "mousemove.zig": _handleMouseMove 
-                  , "mouseover.zig": _handleMouseOver
-                  , "mouseout.zig":  _handleMouseOut                        
-                });
+            base.$node.bind({
+                "mousemove.zig": _handleMouseMove 
+              , "mouseover.zig": _handleMouseOver
+              , "mouseout.zig":  _handleMouseOut                        
+            });
             
             var handle, element = base.$node.get(0);
             if ($.browser.mozilla && parseFloat($.browser.version.substr(0, 3)) * 10 >= 19) {
@@ -366,10 +367,10 @@
             }
             if (element.addEventListener) {
                 element.addEventListener(handle || "mousewheel", _handleMousePan, false);
-            } else if (element.attachEvent) {
-                element.attachEvent("onmousewheel", function () { 
+            } else if ($.browser.msie) {
+                element.onmousewheel = function () { 
                     return _handleMousePan.call(element, window.event);
-                });
+                };
             }
         }
         
@@ -381,7 +382,6 @@
             base.graphContainer[id] = $("<ul>", {
                 css: {
                     listStyle: "none"
-                  // , position: "absolute"
                   , zIndex: 1000 + base.planeIndex[id] 
                 }
             }).appendTo(base.$node); 
@@ -543,7 +543,7 @@
                     }           
                 } else {
                     widthCurrent--;
-                    zIndexCurrent = 2222 * (base.planeIndex[id] + 1);
+                    zIndexCurrent = 1111 * (base.planeIndex[id] + 1);
                 }
     
                 styles = {
@@ -669,7 +669,7 @@
                   , top: "2px"
                   , font: $.zig.constants.FONT
                   , color: base.options.scaleColor
-                  , zIndex: 8900
+                  , zIndex: 1900
                   , "-moz-user-select": "-moz-none"
                   , "-webkit-user-select": "none"
                   , "-o-user-select": "none"
@@ -684,7 +684,9 @@
          * Render the cursor elements (and coordinate readings if specified).
          */
         function _renderCursorControls(invisible) {
-            _renderCrosshairCursor(invisible);    
+            if (base.useCustomCursor) {
+                _renderCrosshairCursor(invisible, false);
+            }    
             
             base.options.showCoordinates && _renderCoordinates(invisible);   
         }
@@ -716,7 +718,7 @@
                       , height: Math.round(height / 2) + "px"
                       , borderBottom: style
                       , opacity: opacity
-                      , zIndex: 15000
+                      , zIndex: 1500
                     }
                 }).appendTo(base.$node);
             }
@@ -734,7 +736,7 @@
                       , borderTop: style
                       , borderBottom: style
                       , opacity: opacity
-                      , zIndex: 15000
+                      , zIndex: 1500
                     }
                 }).appendTo(base.$node);            
             }
@@ -744,14 +746,14 @@
         /**
          * Render a crosshair cursor.
          */
-        function _renderCrosshairCursor(invisible) {
+        function _renderCrosshairCursor(invisible, shadowed) {
             if (base.cursors != null) {
                 base.cursors.remove();
             }
             
             var commonStyles = {
                 position: "absolute"
-              , zIndex: 90000
+              , zIndex: 10000
             };            
             if (!!invisible) {
                 commonStyles["display"] = "none";
@@ -789,7 +791,7 @@
             
             var commonStyles = {
                 position: "absolute"
-              , zIndex: 90000
+              , zIndex: 10000
               , font: $.zig.constants.FONT
               , color: base.options.coordinatesColor
               , lineHeight: $.zig.constants.TEXT_LINE_HEIGHT + "px"
@@ -1165,23 +1167,18 @@
                     height = _getInnerHeight(),
                     x = Math.floor(event.pageX - offset.left),
                     y = Math.floor(event.pageY - offset.top);
-
-                /* Compensate for Opera's hotspot offsets. */    
-                if ($.browser.opera) {
-                    x--, y--;
-                }
                     
                 if (x >= base.options.width || y >= height) {
                     /*
                      * Hide coordinate readings.
                      */
-                    base.cursors.css("display", "none");
+                    base.useCustomCursor && base.cursors.css("display", "none");
                     base.options.showCoordinates && base.coordinates.css("display", "none");
                     
                     /* 
                      * Reset graph opacity.
                      */                         
-                    var containers = base.graphContainer, ids = base.graphIds,  
+                    var containers = base.graphContainer, ids = base.graphIds,
                         counter = base.graphCount;
                     while (counter--) {
                         containers[ids[counter]].css("opacity", 1);
@@ -1197,14 +1194,16 @@
                 } else {
                     _doGraphHighlight(x + base.scrollPosition, y);
                     
-                    base.horizontalCrosshairCursor.css({
-                        display: "block"
-                      , paddingLeft: x + "px"
-                    });
-                    base.verticalCrosshairCursor.css({
-                        display: "block"
-                      , paddingTop: y + "px"
-                    });
+                    if (base.useCustomCursor) {
+                        base.horizontalCrosshairCursor.css({
+                            display: "block"
+                          , paddingLeft: x + "px"
+                        });
+                        base.verticalCrosshairCursor.css({
+                            display: "block"
+                          , paddingTop: y + "px"
+                        });
+                    }
                     
                     if (base.options.showCoordinates) {
                         _updateCoordinate(x, "horizontal");
@@ -1248,8 +1247,8 @@
                 if (/chrome/i.test(navigator.userAgent)) {
                     delta *= 40;
                 }
-            } else if ($.browser.opera && "wheelDelta" in event) {
-                var delta = event.wheelDelta / -12;
+            } else if (($.browser.msie || $.browser.opera) && "wheelDelta" in event) {
+                var delta = event.wheelDelta / -3;
             } else {
                 return;
             }
@@ -1293,8 +1292,13 @@
                 }
                 
                 /* Prevent the default scroll operation. */
-                event.preventDefault();
-                event.stopPropagation();
+                if ($.browser.msie) {
+                    event.cancelBubble = true;
+                    return false;
+                } else {
+                    event.preventDefault();
+                    event.stopPropagation();    
+                }
             }            
         }
         
@@ -1304,7 +1308,7 @@
          */
         function _handleMouseOver(event) {
             if (!base.isScrolling) {
-                base.cursors && base.cursors.css("display", "block");
+                base.useCustomCursor && base.cursors.css("display", "block");
                 base.options.showCoordinates && base.coordinates.css("display", "block");
             }
         }
@@ -1324,7 +1328,7 @@
             }
 
             /* Reset cursor and coordinates state. */
-            base.cursors && base.cursors.css("display", "none");
+            base.useCustomCursor && base.cursors.css("display", "none");
             if (base.options.showCoordinates) {
                 base.isOnPath = false;
                 base.horizontalReadingMode = false;
@@ -1444,7 +1448,7 @@
             
             var isCanvas = $.prototype.zig.supportsCanvas && base.options.defaultRenderPath == "auto"; 
             
-            /* Re-init ... */
+            /* Re-init <canvas> segments. */
             if (isCanvas) {
                 base.canvasSegmentContexts = {};
                 base.canvasSegmentWidths = {};
@@ -1913,7 +1917,11 @@
          * Turn on the shadow cursor in a synchronized chart. 
          */
         base.enableShadowCrosshair = function () {
-            base.cursors.css("border-style", "dashed");
+            if (base.cursors == null) {
+                _renderCrosshairCursor(false, true);
+            } else {
+                base.cursors.css("border-style", "dashed");
+            }
         };
         
 
