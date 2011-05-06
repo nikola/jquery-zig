@@ -1431,6 +1431,8 @@
                     graph = base.graphIds[counter];
                 
                     containers[graph].css("opacity", restore ? 1 : base.hasFilledPaths && base.planeIndex[graph] < highestPlane ? 0.2 : targetOpacity[graph]);
+                    
+                    console.log(restore ? 1 : base.hasFilledPaths && base.planeIndex[graph] < highestPlane ? 0.2 : targetOpacity[graph]);
                  }
                  
                  (base.options.showCoordinates && highlightSet.length) && _showSampleReadings(x, highlightSet);
