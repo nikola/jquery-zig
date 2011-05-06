@@ -123,14 +123,17 @@
           , horizontalCrosshairCursor: null
           , verticalCrosshairCursor: null
           
-            /* State of coordinate readings. */
+            /* x/y position of cursor. */
           , coordinates: null  
-          , horizontalCoordinate: null
+          , positionIndex: null
+          , positionValue: null
+          , positionReadings: null
+          
+          /* State of coordinate readings. */
           , horizontalOrientation: null
-          , verticalCoordinate: null
-          , horizontalReadingMode: false
           , sampleReadings: {}
           , lastHorizontalX: null
+          , hasHighlights: false
             
         });        
                                 
@@ -193,8 +196,12 @@
                 base.lastElementZIndex = {};
             }
 
-            /* Diagram width must be a multiple of DIAGRAM_COLUMN_WIDTH. */
-            var columnWidth = $.zig.constants.DIAGRAM_COLUMN_WIDTH;
+            /* Diagram width must be a multiple of DEFAULT_COLUMN_WIDTH. */
+            if ((base.options.sampleRenderWidth | 0) < $.zig.constants.DEFAULT_COLUMN_WIDTH) {
+                base.options.sampleRenderWidth = $.zig.constants.DEFAULT_COLUMN_WIDTH;
+            }
+           
+            var columnWidth = base.options.sampleRenderWidth;
             base.options.width = Math.floor(base.options.width / columnWidth) * columnWidth;
                         
             /* Maximum number of samples that fit within the visible canvas. */
@@ -214,7 +221,7 @@
             };  
             if ($.browser.msie || $.browser.opera) {
                 styles.cursor = "crosshair";
-                base.useCustomCursor = false;                
+                base.useCustomCursor = false; 
             } else {
                 styles.cursor = "none";
             }
@@ -434,7 +441,7 @@
                 fillColor = base.config[id].fillColor; 
             
             /* Create new segment. */
-            var canvasElement = _appendCanvasSegment(id, count * $.zig.constants.DIAGRAM_COLUMN_WIDTH, height),                                
+            var canvasElement = _appendCanvasSegment(id, count * base.options.sampleRenderWidth, height),                                
                 context = canvasElement.get(0).getContext("2d");
                 
             /* Define styles. */    
@@ -463,7 +470,7 @@
                 
                 _tracePathCanvas(context, samples, height, offset, continueFrom);
                                 
-                context.lineTo(count * $.zig.constants.DIAGRAM_COLUMN_WIDTH, height);
+                context.lineTo(count * base.options.sampleRenderWidth, height);
                 context.lineTo(0, height);
                 context.lineTo(0, height - samples[0] + offset);
                 
@@ -478,7 +485,7 @@
         function _tracePathCanvas(context, samples, height, offset, continueFrom) {
             context.moveTo(0, height - continueFrom);    
                 
-            var columnWidth = $.zig.constants.DIAGRAM_COLUMN_WIDTH,
+            var columnWidth = base.options.sampleRenderWidth,
                 s = 0, length = samples.length;
             do {
                 /* Might trigger https://bugzilla.mozilla.org/show_bug.cgi?id=564332 */
@@ -506,7 +513,7 @@
             var height = _getInnerHeight(),
                 borderCss = "1px solid " + base.config[id].lineColor,
                 backgroundColor = base.config[id].fillColor,
-                widthBase = $.zig.constants.DIAGRAM_COLUMN_WIDTH, widthCurrent, 
+                widthBase = base.options.sampleRenderWidth, widthCurrent, 
                 widthPreceding = base.lastElementWidth[id],
                 currentValue, precedingValue,
                 zIndexCurrent, zIndexPreceding = base.lastElementZIndex[id], 
@@ -578,7 +585,7 @@
         function _traceOutlinedPathHtml(id, samples, continueFrom, startIndex) {
             var height = _getInnerHeight() - 1,
                 borderCss = "2px solid " + base.config[id].lineColor,
-                widthBase = $.zig.constants.DIAGRAM_COLUMN_WIDTH, widthCurrent, widthPreceding,
+                widthBase = base.options.sampleRenderWidth, widthCurrent, widthPreceding,
                 currentValue, precedingValue,
                 borderTop, borderBottom, marginTopPreceding,
                 s = 0, length = samples.length;
@@ -669,13 +676,13 @@
                   , top: "2px"
                   , font: $.zig.constants.FONT
                   , color: base.options.scaleColor
-                  , zIndex: 1900
+                  , zIndex: 19000
                   , "-moz-user-select": "-moz-none"
                   , "-webkit-user-select": "none"
                   , "-o-user-select": "none"
                   , "user-select": "none"
-                },
-                unselectable: "on"
+                }
+              , unselectable: "on"
             }).appendTo(base.$node);
         }
         
@@ -697,7 +704,7 @@
          */
         function _renderVerticalGrid() {
             /* Correct invalid grid count. */
-            if ((base.options.verticalGridSegments | 0) < 2) {
+            if ((base.options.verticalGridSegments | 0) < $.zig.constants.DEFAULT_GRID_SEGMENTS) {
                 base.options.verticalGridSegments = 2;
             }
             
@@ -718,7 +725,7 @@
                       , height: Math.round(height / 2) + "px"
                       , borderBottom: style
                       , opacity: opacity
-                      , zIndex: 1500
+                      , zIndex: 19000
                     }
                 }).appendTo(base.$node);
             }
@@ -736,7 +743,7 @@
                       , borderTop: style
                       , borderBottom: style
                       , opacity: opacity
-                      , zIndex: 1500
+                      , zIndex: 19000
                     }
                 }).appendTo(base.$node);            
             }
@@ -753,7 +760,7 @@
             
             var commonStyles = {
                 position: "absolute"
-              , zIndex: 10000
+              , zIndex: 20000
             };            
             if (!!invisible) {
                 commonStyles["display"] = "none";
@@ -791,7 +798,7 @@
             
             var commonStyles = {
                 position: "absolute"
-              , zIndex: 10000
+              , zIndex: 20000
               , font: $.zig.constants.FONT
               , color: base.options.coordinatesColor
               , lineHeight: $.zig.constants.TEXT_LINE_HEIGHT + "px"
@@ -804,14 +811,21 @@
                 commonStyles.display = "none";
             }
             
-            base.horizontalCoordinate = $("<div>", {
+            base.positionIndex = $("<div>", {
+                css: $.extend({
+                    marginTop: (_getInnerHeight() - $.zig.constants.TEXT_LINE_HEIGHT - 2) + "px"
+                }, commonStyles)
+              , unselectable: "on"
+            }).appendTo(base.$node);
+            
+            base.positionReadings = $("<div>", {
                 css: $.extend({
                     marginTop: (_getInnerHeight() - $.zig.constants.TEXT_LINE_HEIGHT - 2) + "px"
                 }, commonStyles)
               , unselectable: "on"
             }).appendTo(base.$node);
 
-            base.verticalCoordinate = $("<div>", {
+            base.positionValue = $("<div>", {
                 css: $.extend({
                     textAlign: "right"
                   , width: base.options.width + "px"
@@ -819,7 +833,7 @@
               , unselectable: "on"
             }).appendTo(base.$node);
             
-            base.coordinates = base.horizontalCoordinate.add(base.verticalCoordinate);
+            base.coordinates = base.positionIndex.add(base.positionReadings).add(base.positionValue);
         }
         
         
@@ -827,10 +841,8 @@
          * Update coordinate readings.
          */
         function _updateCoordinate(value, axis) {
-            var lineHeight = $.zig.constants.TEXT_LINE_HEIGHT;
-            
             if (axis == "vertical") {
-                if (base.horizontalReadingMode) {
+                if (base.isOnPath) {
                     return;
                 }
                 
@@ -843,21 +855,22 @@
                 }
                 
                 if (value > Math.ceil(height * 0.5)) {
-                    top -= lineHeight;
+                    top -= $.zig.constants.TEXT_LINE_HEIGHT;
                 }
 
-                base.verticalCoordinate
+                base.positionValue
                     .css({
                         display: "block"
                       , marginTop: top + "px"
                     })
                     .text(displayValue + " " + base.options.unit);
             } else {
+                var lineHeight = $.zig.constants.TEXT_LINE_HEIGHT;
+                
                 /* Needed for mouse pans. */
                 base.lastHorizontalX = value;
                 
-                var element = base.horizontalCoordinate,
-                    currentOrientation = value < Math.ceil(base.options.width * 0.5),
+                var currentOrientation = value < Math.ceil(base.options.width * 0.5),
                     styles = {};
                                     
                 if (currentOrientation != base.horizontalOrientation) {
@@ -875,101 +888,47 @@
                     styles.width = (value - 2) + "px";
                 }
                 
-                if (base.horizontalReadingMode && !base.isOnPath) {
-                    base.horizontalReadingMode = false;
-                    
-                    styles.marginTop = (_getInnerHeight() - lineHeight - 2) + "px";
-                    styles.lineHeight = lineHeight + "px";        
-                } 
-                
-                /* Update horizontal coordinate. */
-                element.css(styles);
-
                 /*
                  * Render label if set, otherwise render the sample's index.
                  */ 
+                var sample = Math.floor((value + base.scrollPosition) / base.options.sampleRenderWidth);
+                base.positionIndex.text(
+                    !!base.sampleLabels[sample] ? base.sampleLabels[sample] : sample + 1
+                );
+                
+                /*
+                 * Update sample index and readings positions.
+                 */
                 if (!base.isOnPath) {
-                    var sample = Math.floor((value + base.scrollPosition) / $.zig.constants.DIAGRAM_COLUMN_WIDTH);
-                    element.text(
-                        !!base.sampleLabels[sample] ? base.sampleLabels[sample] : sample + 1
-                    );
-                }
-            }
-        }
-        
-        
-        /**
-         * Update sample readings.
-         */
-        function _showSampleReadings(x, ids) {
-            var element = base.horizontalCoordinate,
-                sample = Math.floor(x / $.zig.constants.DIAGRAM_COLUMN_WIDTH),
-                sorted;
-             
-            if (ids.length == 1) {
-                sorted = ids;
-            } else if (ids.length == 2) {
-                if (base.rawSamples[ids[0]][sample] > base.rawSamples[ids[1]][sample]) {
-                    sorted = [ids[1], ids[0]];
-                } else {
-                    sorted = ids;
-                }
-            } else {
-                var samples = [], i = 0, id;
-                do {
-                    id = ids[i];
-                    samples.push(base.rawSamples[id][sample]);
-                } while (++i < ids.length);
-                
-                samples.sort();
-                
-                var s = 0, sorted = [];
-                do {
-                    var value = samples[s];
-                    for (var t = 0; t < ids.length; t++) {
-                        if (base.rawSamples[ids[t]][sample] == value) {
-                            sorted.push(ids[t]);
-                        }
+                    base.ceilingText.css("opacity", 1);
+                    
+                    styles.display = "none";
+                    base.positionReadings.css(styles);
+                    
+                    if (base.hasHighlights) {
+                        base.hasHighlights = false;
+                        
+                        styles.marginTop = (_getInnerHeight() - lineHeight - 2) + "px";
+                        styles.top = "auto";
+                        styles.lineHeight = lineHeight + "px";
                     }
-                } while (++s < samples.length);
+                    
+                    styles.display = "block";
+                    base.positionIndex.css(styles);
+                } else {
+                    if (value < Math.ceil(base.options.width * 0.25)) {
+                        base.ceilingText.css("opacity", 0.2);
+                    } else {
+                        base.ceilingText.css("opacity", 1);
+                    }
+                    
+                    styles.display = "block";
+                    base.positionReadings.css(styles);
+                    
+                    styles.marginTop = 0;
+                    base.positionIndex.css(styles);
+                }
             }
-            
-            base.horizontalReadingMode = true;
-            base.verticalCoordinate.css("display", "none");
-           
-            element.empty();
-           
-            var d = ids.length - 1, buffer = [], id;
-            do {
-                id = sorted[d];
-                if (!(id in base.sampleReadings)) {
-                    base.sampleReadings[id] = $("<span>", {
-                        css: {
-                            border: "1px solid " + (base.config[id].highlightBorderColor || base.config[id].lineColor) 
-                          , borderTopWidth: "3px"
-                          , padding: "2px"
-                          , color: base.config[id].highlightTextColor || base.options.coordinatesColor
-                          , backgroundColor: base.config[id].highlightBackgroundColor || base.options.canvasColor
-                          , "-moz-user-select": "-moz-none"
-                          , "-webkit-user-select": "none"
-                          , "-o-user-select": "none"
-                          , "user-select": "none"
-                        } 
-                      , unselectable: "on"
-                    });
-                }                
-                base.sampleReadings[id].text(
-                    base.rawSamples[id][sample] + " " + base.options.unit
-                ).appendTo(element);
-                
-               $("<br>").appendTo(element); 
-            } while (d--);
-            
-            var height = $.zig.constants.TEXT_LINE_HEIGHT + 1 + 2 + 2 + 3 + 4;
-            element.css({
-                marginTop: (_getInnerHeight() - height * ids.length) + "px"
-              , lineHeight: height + "px"
-            });
         }
         
         
@@ -1083,7 +1042,7 @@
             /*
              * Update clipping.
              */
-            var chartWidth = base.sampleCountMax * $.zig.constants.DIAGRAM_COLUMN_WIDTH,
+            var chartWidth = base.sampleCountMax * base.options.sampleRenderWidth,
                 scrollableExcess = chartWidth - base.options.width,
                 scrollPosition = Math.round(scrollableExcess / 100 * percentage),
                 left = base.graphClipOffset + scrollPosition,
@@ -1199,6 +1158,7 @@
                             display: "block"
                           , paddingLeft: x + "px"
                         });
+                        
                         base.verticalCrosshairCursor.css({
                             display: "block"
                           , paddingTop: y + "px"
@@ -1254,7 +1214,7 @@
             }
             
             if (delta) {
-                var columnWidth = $.zig.constants.DIAGRAM_COLUMN_WIDTH,
+                var columnWidth = base.options.sampleRenderWidth,
                     targetPosition = base.scrollPosition + Math.ceil(delta);
                             
                 /* Constrain scroller position. */
@@ -1265,7 +1225,7 @@
                 var x = base.lastHorizontalX,
                     sample = Math.floor((x - x % columnWidth + base.scrollPosition) / columnWidth);
 
-                base.options.showCoordinates && base.horizontalCoordinate.text(
+                base.options.showCoordinates && base.positionIndex.text(
                     !!base.sampleLabels[sample] ? base.sampleLabels[sample] : sample + 1
                 );
                                 
@@ -1286,9 +1246,32 @@
                     handle = base.synchronizedTo[counter];
                     
                     handle.scrollTo(percentage); 
-                    handle.options.showCoordinates && handle.horizontalCoordinate.text(
+                    handle.options.showCoordinates && handle.positionIndex.text(
                         Math.floor((handle.lastHorizontalX + handle.scrollPosition) / columnWidth) + 1
                     );                        
+                }
+                
+                /*
+                 * Revert coordinates to defaults.
+                 */
+                if (base.isOnPath) {
+                    base.isOnPath = false;
+                    
+                    var lineHeight = $.zig.constants.TEXT_LINE_HEIGHT;
+                    base.positionIndex.css({
+                        marginTop: (_getInnerHeight() - lineHeight - 2) + "px"
+                      , top: "auto"
+                      , lineHeight: lineHeight + "px"
+                    });    
+                    base.positionReadings.css("display", "none");
+                    base.positionValue.css("display", "block");
+                    
+                    /* Reset graph opacity. */                         
+                    var containers = base.graphContainer, ids = base.graphIds,
+                        counter = base.graphCount;
+                    while (counter--) {
+                        containers[ids[counter]].css("opacity", 1);
+                    }
                 }
                 
                 /* Prevent the default scroll operation. */
@@ -1331,7 +1314,6 @@
             base.useCustomCursor && base.cursors.css("display", "none");
             if (base.options.showCoordinates) {
                 base.isOnPath = false;
-                base.horizontalReadingMode = false;
                 base.coordinates.css("display", "none");
             }
                          
@@ -1372,7 +1354,7 @@
                 value = absY * scaleFactor,
                 lowerBoundary = (absY - 6) * scaleFactor,
                 upperBoundary = (absY + 6) * scaleFactor,
-                index = Math.floor(x / $.zig.constants.DIAGRAM_COLUMN_WIDTH),
+                index = Math.floor(x / base.options.sampleRenderWidth),
                 rawSamples = base.rawSamples, sample, current,
                 idSet = base.graphIds, containers = base.graphContainer,
                 targetOpacity = {}, highlightSet = [], isTracking = false,
@@ -1433,7 +1415,81 @@
                     containers[graph].css("opacity", restore ? 1 : base.hasFilledPaths && base.planeIndex[graph] < highestPlane ? 0.2 : targetOpacity[graph]);
                  }
                  
-                 (base.options.showCoordinates && highlightSet.length) && _showSampleReadings(x, highlightSet);
+                 if (base.options.showCoordinates && highlightSet.length) {
+                    base.hasHighlights = true;
+                     
+                    var sample = Math.floor(x / base.options.sampleRenderWidth),
+                        sorted;
+                     
+                    if (highlightSet.length == 1) {
+                        sorted = highlightSet;
+                    } else if (highlightSet.length == 2) {
+                        if (base.rawSamples[highlightSet[0]][sample] > base.rawSamples[highlightSet[1]][sample]) {
+                            sorted = [highlightSet[1], highlightSet[0]];
+                        } else {
+                            sorted = highlightSet;
+                        }
+                    } else {
+                        var samples = [], i = 0, id;
+                        do {
+                            id = highlightSet[i];
+                            samples.push(base.rawSamples[id][sample]);
+                        } while (++i < highlightSet.length);
+                        
+                        samples.sort();
+                        
+                        var s = 0, sorted = [];
+                        do {
+                            var value = samples[s];
+                            for (var t = 0; t < highlightSet.length; t++) {
+                                if (base.rawSamples[highlightSet[t]][sample] == value) {
+                                    sorted.push(highlightSet[t]);
+                                }
+                            }
+                        } while (++s < samples.length);
+                    }
+        
+                    /* Move sample index reading to the top of the chart. */            
+                    base.positionIndex.css({
+                        marginTop: 0
+                      , top: "2px"
+                    });
+                    base.positionValue.css("display", "none");
+                    base.positionReadings.empty();
+                   
+                    var d = highlightSet.length - 1, buffer = [], id;
+                    do {
+                        id = sorted[d];
+                        if (!(id in base.sampleReadings)) {
+                            base.sampleReadings[id] = $("<span>", {
+                                css: {
+                                    border: "1px solid " + (base.config[id].highlightBorderColor || base.config[id].lineColor) 
+                                  , borderTopWidth: "3px"
+                                  , padding: "2px"
+                                  , color: base.config[id].highlightTextColor || base.options.coordinatesColor
+                                  , backgroundColor: base.config[id].highlightBackgroundColor || base.options.canvasColor
+                                  , "-moz-user-select": "-moz-none"
+                                  , "-webkit-user-select": "none"
+                                  , "-o-user-select": "none"
+                                  , "user-select": "none"
+                                } 
+                              , unselectable: "on"
+                            });
+                        }                
+                        base.sampleReadings[id].text(
+                            base.rawSamples[id][sample] + " " + base.options.unit
+                        ).appendTo(base.positionReadings);
+                        
+                       $("<br>").appendTo(base.positionReadings); 
+                    } while (d--);
+                    
+                    var height = $.zig.constants.TEXT_LINE_HEIGHT + 1 + 2 + 2 + 3 + 4;
+                    base.positionReadings.css({
+                        marginTop: (_getInnerHeight() - height * highlightSet.length) + "px"
+                      , top: "auto"
+                      , lineHeight: height + "px"
+                    });                 
+                }
             }
             
             base.isOnPath = isTracking;    
@@ -1594,7 +1650,7 @@
                     if (sampleCount) {
                         var skip = sampleCount + addCount - base.maxSamples;
                         
-                        base.graphClipOffset += skip * $.zig.constants.DIAGRAM_COLUMN_WIDTH;
+                        base.graphClipOffset += skip * base.options.sampleRenderWidth;
 
                         /* 
                          * Shave off leading elements across all paths.
@@ -1962,6 +2018,9 @@
         
         /* Outer height of chart (excluding border but including scrollbars). */
       , height: 200                
+
+        /* Size of each rendered sample column in pixels. */
+      , sampleRenderWidth: 5
                 
         /* CSS color code for the background fill color of the chart. */
       , canvasColor: "#fff"        
@@ -2031,7 +2090,8 @@
       , SCROLLBAR_HEIGHT_BASE: 3
       , FONT: '10px "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif'
       , TEXT_LINE_HEIGHT: 12
-      , DIAGRAM_COLUMN_WIDTH: 5
+      , DEFAULT_GRID_SEGMENTS: 2
+      , DEFAULT_COLUMN_WIDTH: 5
       , DEFAULT_COLORS: [
             {   /* red */
                 lineColor: "#993300"
