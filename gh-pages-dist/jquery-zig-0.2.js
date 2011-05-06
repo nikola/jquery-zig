@@ -367,7 +367,7 @@
             }
             if (element.addEventListener) {
                 element.addEventListener(handle || "mousewheel", _handleMousePan, false);
-            } else {
+            } else if ($.browser.msie) {
                 element.onmousewheel = function () { 
                     return _handleMousePan.call(element, window.event);
                 };
@@ -1247,10 +1247,8 @@
                 if (/chrome/i.test(navigator.userAgent)) {
                     delta *= 40;
                 }
-            } else if ($.browser.opera && "wheelDelta" in event) {
-                var delta = event.wheelDelta / -12;
-            } else if ($.browser.msie && "wheelDelta" in event) {
-                var delta = event.wheelDelta / -12;
+            } else if (($.browser.msie || $.browser.opera) && "wheelDelta" in event) {
+                var delta = event.wheelDelta / -3;
             } else {
                 return;
             }
@@ -1294,8 +1292,13 @@
                 }
                 
                 /* Prevent the default scroll operation. */
-                event.preventDefault();
-                event.stopPropagation();
+                if ($.browser.msie) {
+                    event.cancelBubble = true;
+                    return false;
+                } else {
+                    event.preventDefault();
+                    event.stopPropagation();    
+                }
             }            
         }
         
