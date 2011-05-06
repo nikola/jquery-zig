@@ -214,11 +214,7 @@
             };  
             if ($.browser.msie || $.browser.opera) {
                 styles.cursor = "crosshair";
-                
-                /* Won't look nice on MSIE anyway. */
-                if ($.browser.msie) {
-                    base.useCustomCursor = false;
-                }
+                base.useCustomCursor = false;                
             } else {
                 styles.cursor = "none";
             }
@@ -689,7 +685,7 @@
          */
         function _renderCursorControls(invisible) {
             if (base.useCustomCursor) {
-                _renderCrosshairCursor(invisible);
+                _renderCrosshairCursor(invisible, false);
             }    
             
             base.options.showCoordinates && _renderCoordinates(invisible);   
@@ -750,7 +746,7 @@
         /**
          * Render a crosshair cursor.
          */
-        function _renderCrosshairCursor(invisible) {
+        function _renderCrosshairCursor(invisible, shadowed) {
             if (base.cursors != null) {
                 base.cursors.remove();
             }
@@ -1171,11 +1167,6 @@
                     height = _getInnerHeight(),
                     x = Math.floor(event.pageX - offset.left),
                     y = Math.floor(event.pageY - offset.top);
-
-                /* Compensate for hotspot offsets. */    
-                if ($.browser.opera || $.browser.msie) {
-                    x--, y--;
-                }
                     
                 if (x >= base.options.width || y >= height) {
                     /*
@@ -1895,11 +1886,9 @@
             }
             
             /* Update cursor position. */
-            if (base.useCustomCursor) {
-                base.cursors.css("display", "block");
-                base.horizontalCrosshairCursor.css("padding-left", x + "px");
-                base.verticalCrosshairCursor.css("padding-top", y + "px");
-            }
+            base.cursors.css("display", "block");
+            base.horizontalCrosshairCursor.css("padding-left", x + "px");
+            base.verticalCrosshairCursor.css("padding-top", y + "px");
             
             /* Update coordinates. */
             if (base.options.showCoordinates) {
@@ -1914,7 +1903,7 @@
          * Hide the cursor.
          */
         base.hideCursor = function () {
-            base.useCustomCursor && base.cursors.css("display", "none");
+            base.cursors.css("display", "none");
             base.options.showCoordinates && base.coordinates.css("display", "none");
         };
         
@@ -1923,7 +1912,11 @@
          * Turn on the shadow cursor in a synchronized chart. 
          */
         base.enableShadowCrosshair = function () {
-            base.useCustomCursor && base.cursors.css("border-style", "dashed");
+            if (base.cursors == null) {
+                _renderCrosshairCursor(false, true);
+            } else {
+                base.cursors.css("border-style", "dashed");
+            }
         };
         
 
@@ -1931,7 +1924,7 @@
          *  Turn off the shadow cursor in a synchronized chart.
          */
         base.disableShadowCrosshair = function () {
-            base.useCustomCursor && base.cursors.css("border-style", "solid");
+            base.cursors.css("border-style", "solid");
         };
         
         
