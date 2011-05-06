@@ -199,7 +199,7 @@ li a[href]:hover, li a[href]:active {
 #demo-container:after {
     clear: both;
     }
-
+    
 .demo-chart {
     display: inline-block;
     float: left;

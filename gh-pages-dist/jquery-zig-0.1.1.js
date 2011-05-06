@@ -1,5 +1,5 @@
 /*!
- * jquery-zig Plugin Version 0.1.1-20110506
+ * jquery-zig Plugin Version 0.2-20110506
  * Copyright 2011, Nikola Klaric.
  * 
  * https://github.com/nikola/jquery-zig
@@ -211,6 +211,7 @@
               , border: "1px solid " + ((base.options.borderColor == "transparent") ?
                     base.options.backgroundColor : base.options.borderColor) 
               , overflow: "hidden"
+              , cursor: "crosshair" // TODO: check if this is the right place    
             });  
 
             /* Initialize and render graph containers as defined in init parameters. */
@@ -357,7 +358,7 @@
             }
             
             base.$node
-                .css("cursor", cursor || "none")                
+                // .css("cursor", cursor || "none")                
                 .bind({
                     "mousemove.zig": _handleMouseMove 
                   , "mouseover.zig": _handleMouseOver
@@ -385,8 +386,8 @@
             base.graphContainer[id] = $("<ul>", {
                 css: {
                     listStyle: "none"
-                  , position: "absolute"
-                  , cursor: "crosshair"
+                  // , position: "absolute"
+                  // , cursor: "crosshair" -- useless here, no effect
                   , zIndex: 1000 + base.planeIndex[id] 
                 }
             }).appendTo(base.$node); 
@@ -400,8 +401,8 @@
             var canvasSegment = $("<li>", {
                 css: {
                     display: "inline-block"
-                  , cursor: "crosshair"
-                  // , position: "absolute"
+                  // , cursor: "crosshair"
+                  , position: "absolute"
                 }
             }).appendTo(base.graphContainer[id]);
                 
@@ -1190,7 +1191,7 @@
                     /* 
                      * Reset graph opacity.
                      */                         
-                    var containers = base.graphContainer, ids = base.graphIds,  
+                    var containers = base.graphContainer, ids = base.graphIds,
                         counter = base.graphCount;
                     while (counter--) {
                         containers[ids[counter]].css("opacity", 1);
@@ -1455,7 +1456,7 @@
             
             var isCanvas = $.prototype.zig.supportsCanvas && base.options.defaultRenderPath == "auto"; 
             
-            /* Re-init ... */
+            /* Re-init <canvas> segments. */
             if (isCanvas) {
                 base.canvasSegmentContexts = {};
                 base.canvasSegmentWidths = {};
