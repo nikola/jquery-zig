@@ -753,7 +753,7 @@
             
             var commonStyles = {
                 position: "absolute"
-              , zIndex: 2000
+              , zIndex: 10000
             };            
             if (!!invisible) {
                 commonStyles["display"] = "none";
@@ -791,7 +791,7 @@
             
             var commonStyles = {
                 position: "absolute"
-              , zIndex: 2000
+              , zIndex: 10000
               , font: $.zig.constants.FONT
               , color: base.options.coordinatesColor
               , lineHeight: $.zig.constants.TEXT_LINE_HEIGHT + "px"
