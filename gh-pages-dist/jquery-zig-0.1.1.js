@@ -118,6 +118,7 @@
           , lastPageY: null
             
             /* State of custom cursor. */
+          , showCustomCursor: true
           , cursors: null
           , horizontalCrosshairCursor: null
           , verticalCrosshairCursor: null
@@ -227,6 +228,9 @@
             
             /* Set up cursor controls. */  
             if (!base.options.debug) {
+                if ($.browser.opera || $.browser.msie) {
+                    // base.showCustomCursor = false;
+                }
                 _renderCursorControls(true);
                 _wireMouseControls();
             }   
@@ -381,7 +385,8 @@
             base.graphContainer[id] = $("<ul>", {
                 css: {
                     listStyle: "none"
-                  // , position: "absolute"
+                  , position: "absolute"
+                  , cursor: "crosshair"
                   , zIndex: 1000 + base.planeIndex[id] 
                 }
             }).appendTo(base.$node); 
@@ -395,7 +400,8 @@
             var canvasSegment = $("<li>", {
                 css: {
                     display: "inline-block"
-                  , position: "absolute"
+                  , cursor: "crosshair"
+                  // , position: "absolute"
                 }
             }).appendTo(base.graphContainer[id]);
                 
@@ -543,7 +549,8 @@
                     }           
                 } else {
                     widthCurrent--;
-                    zIndexCurrent = 2222 * (base.planeIndex[id] + 1);
+                    // zIndexCurrent = 2222 * (base.planeIndex[id] + 1);
+                    zIndexCurrent = 1111;
                 }
     
                 styles = {
@@ -669,7 +676,7 @@
                   , top: "2px"
                   , font: $.zig.constants.FONT
                   , color: base.options.scaleColor
-                  , zIndex: 8900
+                  , zIndex: 1900 // 8900
                   , "-moz-user-select": "-moz-none"
                   , "-webkit-user-select": "none"
                   , "-o-user-select": "none"
@@ -684,7 +691,9 @@
          * Render the cursor elements (and coordinate readings if specified).
          */
         function _renderCursorControls(invisible) {
-            _renderCrosshairCursor(invisible);    
+            if (base.showCustomCursor) {
+                _renderCrosshairCursor(invisible);
+            }    
             
             base.options.showCoordinates && _renderCoordinates(invisible);   
         }
@@ -716,7 +725,7 @@
                       , height: Math.round(height / 2) + "px"
                       , borderBottom: style
                       , opacity: opacity
-                      , zIndex: 15000
+                      , zIndex: 1500 // 15000
                     }
                 }).appendTo(base.$node);
             }
@@ -734,7 +743,7 @@
                       , borderTop: style
                       , borderBottom: style
                       , opacity: opacity
-                      , zIndex: 15000
+                      , zIndex: 1500 // 15000
                     }
                 }).appendTo(base.$node);            
             }
@@ -751,7 +760,7 @@
             
             var commonStyles = {
                 position: "absolute"
-              , zIndex: 90000
+              , zIndex: 2000 // 90000
             };            
             if (!!invisible) {
                 commonStyles["display"] = "none";
@@ -1175,7 +1184,7 @@
                     /*
                      * Hide coordinate readings.
                      */
-                    base.cursors.css("display", "none");
+                    base.showCustomCursor && base.cursors.css("display", "none");
                     base.options.showCoordinates && base.coordinates.css("display", "none");
                     
                     /* 
@@ -1197,14 +1206,16 @@
                 } else {
                     _doGraphHighlight(x + base.scrollPosition, y);
                     
-                    base.horizontalCrosshairCursor.css({
-                        display: "block"
-                      , paddingLeft: x + "px"
-                    });
-                    base.verticalCrosshairCursor.css({
-                        display: "block"
-                      , paddingTop: y + "px"
-                    });
+                    if (base.showCustomCursor) {
+                        base.horizontalCrosshairCursor.css({
+                            display: "block"
+                          , paddingLeft: x + "px"
+                        });
+                        base.verticalCrosshairCursor.css({
+                            display: "block"
+                          , paddingTop: y + "px"
+                        });
+                    }
                     
                     if (base.options.showCoordinates) {
                         _updateCoordinate(x, "horizontal");
@@ -1304,7 +1315,7 @@
          */
         function _handleMouseOver(event) {
             if (!base.isScrolling) {
-                base.cursors && base.cursors.css("display", "block");
+                base.showCustomCursor && base.cursors.css("display", "block");
                 base.options.showCoordinates && base.coordinates.css("display", "block");
             }
         }
@@ -1324,7 +1335,7 @@
             }
 
             /* Reset cursor and coordinates state. */
-            base.cursors && base.cursors.css("display", "none");
+            base.showCustomCursor && base.cursors.css("display", "none");
             if (base.options.showCoordinates) {
                 base.isOnPath = false;
                 base.horizontalReadingMode = false;
@@ -1887,9 +1898,11 @@
             }
             
             /* Update cursor position. */
-            base.cursors.css("display", "block");
-            base.horizontalCrosshairCursor.css("padding-left", x + "px");
-            base.verticalCrosshairCursor.css("padding-top", y + "px");
+            if (base.showCustomCursor) {
+                base.cursors.css("display", "block");
+                base.horizontalCrosshairCursor.css("padding-left", x + "px");
+                base.verticalCrosshairCursor.css("padding-top", y + "px");
+            }
             
             /* Update coordinates. */
             if (base.options.showCoordinates) {
@@ -1904,7 +1917,7 @@
          * Hide the cursor.
          */
         base.hideCursor = function () {
-            base.cursors.css("display", "none");
+            base.showCustomCursor && base.cursors.css("display", "none");
             base.options.showCoordinates && base.coordinates.css("display", "none");
         };
         
@@ -1913,7 +1926,7 @@
          * Turn on the shadow cursor in a synchronized chart. 
          */
         base.enableShadowCrosshair = function () {
-            base.cursors.css("border-style", "dashed");
+            base.showCustomCursor && base.cursors.css("border-style", "dashed");
         };
         
 
@@ -1921,7 +1934,7 @@
          *  Turn off the shadow cursor in a synchronized chart.
          */
         base.disableShadowCrosshair = function () {
-            base.cursors.css("border-style", "solid");
+            base.showCustomCursor && base.cursors.css("border-style", "solid");
         };
         
         
