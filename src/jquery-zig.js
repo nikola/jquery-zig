@@ -347,14 +347,9 @@
          * Set up cursor controls.
          */
         function _wireMouseControls() {
-            /*
-             * Try to hide the default cursor.
-             */
             var cursor;
-            if ($.browser.opera) {
+            if ($.browser.opera || $.browser.msie) {
                 cursor = "crosshair";
-            } else if ($.browser.msie) {
-                cursor = "url(data:application/x-win-bitmap;base64,AAACAAEAICAAAAAAAAAwAQAAFgAAACgAAAAgAAAAQAAAAAEAAQAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8=)"
             }
             
             base.$node
