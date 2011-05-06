@@ -548,7 +548,7 @@
                     }           
                 } else {
                     widthCurrent--;
-                    zIndexCurrent = 1111;
+                    zIndexCurrent = 2222 * (base.planeIndex[id] + 1);
                 }
     
                 styles = {
@@ -674,7 +674,7 @@
                   , top: "2px"
                   , font: $.zig.constants.FONT
                   , color: base.options.scaleColor
-                  , zIndex: 1900
+                  , zIndex: 8900
                   , "-moz-user-select": "-moz-none"
                   , "-webkit-user-select": "none"
                   , "-o-user-select": "none"
@@ -721,7 +721,7 @@
                       , height: Math.round(height / 2) + "px"
                       , borderBottom: style
                       , opacity: opacity
-                      , zIndex: 1500
+                      , zIndex: 15000
                     }
                 }).appendTo(base.$node);
             }
@@ -739,7 +739,7 @@
                       , borderTop: style
                       , borderBottom: style
                       , opacity: opacity
-                      , zIndex: 1500
+                      , zIndex: 15000
                     }
                 }).appendTo(base.$node);            
             }
@@ -756,7 +756,7 @@
             
             var commonStyles = {
                 position: "absolute"
-              , zIndex: 2000
+              , zIndex: 90000
             };            
             if (!!invisible) {
                 commonStyles["display"] = "none";
@@ -794,7 +794,7 @@
             
             var commonStyles = {
                 position: "absolute"
-              , zIndex: 2000
+              , zIndex: 90000
               , font: $.zig.constants.FONT
               , color: base.options.coordinatesColor
               , lineHeight: $.zig.constants.TEXT_LINE_HEIGHT + "px"
