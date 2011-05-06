@@ -347,9 +347,18 @@
          * Set up cursor controls.
          */
         function _wireMouseControls() {
-            var cursor = $.browser.opera ? "crosshair" : "none";
+            /*
+             * Try to hide the default cursor.
+             */
+            var cursor;
+            if ($.browser.opera) {
+                cursor = "crosshair";
+            } else if ($.browser.msie) {
+                cursor = "url(data:application/x-win-bitmap;base64,AAACAAEAICAAAAAAAAAwAQAAFgAAACgAAAAgAAAAQAAAAAEAAQAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8=)"
+            }
+            
             base.$node
-                .css("cursor", cursor)                
+                .css("cursor", cursor || "none")                
                 .bind({
                     "mousemove.zig": _handleMouseMove 
                   , "mouseover.zig": _handleMouseOver
@@ -377,7 +386,7 @@
             base.graphContainer[id] = $("<ul>", {
                 css: {
                     listStyle: "none"
-                  , position: "absolute"
+                  // , position: "absolute"
                   , zIndex: 1000 + base.planeIndex[id] 
                 }
             }).appendTo(base.$node); 
@@ -391,6 +400,7 @@
             var canvasSegment = $("<li>", {
                 css: {
                     display: "inline-block"
+                  , position: "absolute"
                 }
             }).appendTo(base.graphContainer[id]);
                 
@@ -538,7 +548,7 @@
                     }           
                 } else {
                     widthCurrent--;
-                    zIndexCurrent = 1111;
+                    zIndexCurrent = 2222 * (base.planeIndex[id] + 1);
                 }
     
                 styles = {
@@ -637,9 +647,6 @@
                 } else if ($.browser.webkit) {
                     property = "background";
                     template = "-webkit-gradient(linear,left top,left bottom,from({start}),to({stop}))";
-                } else if ($.browser.msie) {
-                    property = "-ms-filter";
-                    template = "progid:DXImageTransform.Microsoft.gradient(startColorstr='{start}',endColorstr='{stop}')";
                 } else if ($.browser.opera && $.browser.version.replace(/\./g, "") >= 1110) {
                     property = "background";
                     template = "-o-linear-gradient(top,{start},{stop})";
@@ -667,7 +674,7 @@
                   , top: "2px"
                   , font: $.zig.constants.FONT
                   , color: base.options.scaleColor
-                  , zIndex: 1900
+                  , zIndex: 8900
                   , "-moz-user-select": "-moz-none"
                   , "-webkit-user-select": "none"
                   , "-o-user-select": "none"
@@ -714,7 +721,7 @@
                       , height: Math.round(height / 2) + "px"
                       , borderBottom: style
                       , opacity: opacity
-                      , zIndex: 1500
+                      , zIndex: 15000
                     }
                 }).appendTo(base.$node);
             }
@@ -732,7 +739,7 @@
                       , borderTop: style
                       , borderBottom: style
                       , opacity: opacity
-                      , zIndex: 1500
+                      , zIndex: 15000
                     }
                 }).appendTo(base.$node);            
             }
@@ -749,7 +756,7 @@
             
             var commonStyles = {
                 position: "absolute"
-              , zIndex: 2000
+              , zIndex: 90000
             };            
             if (!!invisible) {
                 commonStyles["display"] = "none";
@@ -787,7 +794,7 @@
             
             var commonStyles = {
                 position: "absolute"
-              , zIndex: 2000
+              , zIndex: 90000
               , font: $.zig.constants.FONT
               , color: base.options.coordinatesColor
               , lineHeight: $.zig.constants.TEXT_LINE_HEIGHT + "px"
