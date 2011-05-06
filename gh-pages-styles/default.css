@@ -185,6 +185,7 @@ li a[href]:hover, li a[href]:active {
  * Demo styles.
  */
 
+/* 
 #demo-container {
     margin-top: 16px;
     zoom: 1;
@@ -199,12 +200,24 @@ li a[href]:hover, li a[href]:active {
 #demo-container:after {
     clear: both;
     }
+*/   
     
-.demo-chart {
-    display: inline-block;
-    float: left;
-    }                
+.demo-chart-single {
+    margin: 8px auto 16px;
+    /* margin-left: 16px; */
+    /* display: inline-block;
+    float: left; */
+    }
 
+.demo-chart-container-side-by-side {
+    margin: 8px 0 16px 112px;
+    }
+
+.demo-chart-multi {
+    display: inline-block;
+    margin-right: 12px;
+    }                
+/* 
 #demo-chart-moon, #demo-chart-synced-b {
     margin-left: 16px;
     }
@@ -212,4 +225,4 @@ li a[href]:hover, li a[href]:active {
 #demo-chart-synced-a, #demo-chart-synced-b {
     margin-top: 16px;
     }
-               
+*/            

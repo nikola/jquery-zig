@@ -19,7 +19,7 @@
         <div id="wrapper-top">
             <div id="header">
                 <div id="masthead">
-                    jquery-zig plugin<span id="head-version">0.2</span><span id="menu"><a href="#about">About</a> | <a href="#demo">Demo</a> | <a href="#usage">Usage</a> | <a href="#license">License</a> | <a href="#download">Download</a></span>
+                    jquery-zig plugin<span id="head-version">0.3</span><span id="menu"><a href="#about">About</a> | <a href="#demo">Demo</a> | <a href="#usage">Usage</a> | <a href="#license">License</a> | <a href="#download">Download</a></span>
                 </div>
             </div>
             
@@ -37,195 +37,59 @@
                         <strong>Source</strong> <a href="https://github.com/nikola/jquery-zig">https://github.com/nikola/jquery-zig</a>
                     </p>
                     <p>
-                        <strong>Latest release version</strong> 0.2-20110506
+                        <strong>Latest release version</strong> 0.3-20110507
                     </p>
                     <p>
                         <strong>License</strong> <a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GNU General Public License (GPL) Version 2</a>
                     </p>
                     <p>
-                        <strong>Code size</strong> &#8776; 8 KB (<a href="http://closure-compiler.appspot.com/code/jsc4ca4a1203c3f92058cb0a5d36398dddf/default.js">minified &amp; gzipped</a>)
+                        <strong>Code size</strong> &#8776; 8 KB (minified &amp; gzipped)
                     </p>
                     
                     <a name="demo">Demo</a>
                     
-                    <div id="demo-container">
+                    <p>
+                        Example 1 &mdash; initial HTML sample values, clipped to 80 visible samples, custom vertical grid, 10px sample column width, updated every second
+                    </p>
                         
-                        <!-- Demonstrate inline HTML sample values. -->
-                        <ol id="demo-chart-competitors" class="demo-chart">
-                            <ol id="team-red">
-                                <li>120</li>
-                                <li>139</li>
-                                <li>152</li>
-                                <li>143</li>
-                                <li>142</li>
-                                <li>129</li>
-                                <li>130</li>
-                                <li>117</li>
-                                <li>94</li>
-                                <li>115</li>
-                                <li>106</li>
-                                <li>109</li>
-                                <li>126</li>
-                                <li>119</li>
-                                <li>136</li>
-                                <li>113</li>
-                                <li>90</li>
-                                <li>97</li>
-                                <li>90</li>
-                                <li>83</li>
-                                <li>100</li>
-                                <li>109</li>
-                                <li>84</li>
-                                <li>81</li>
-                                <li>100</li>
-                                <li>107</li>
-                                <li>112</li>
-                                <li>109</li>
-                                <li>92</li>
-                                <li>105</li>
-                                <li>128</li>
-                                <li>121</li>
-                                <li>128</li>
-                                <li>141</li>
-                                <li>116</li>
-                                <li>95</li>
-                                <li>110</li>
-                                <li>125</li>
-                                <li>110</li>
-                                <li>103</li>
-                                <li>108</li>
-                                <li>119</li>
-                                <li>122</li>
-                                <li>139</li>
-                                <li>138</li>
-                                <li>135</li>
-                                <li>116</li>
-                                <li>119</li>
-                                <li>104</li>
-                                <li>97</li>
-                                <li>102</li>
-                                <li>105</li>
-                                <li>98</li>
-                                <li>115</li
-                                ><li>124</li>
-                                <li>101</li>
-                                <li>100</li>
-                                <li>121</li>
-                                <li>104</li>
-                                <li>105</li>
-                                <li>84</li>
-                                <li>85</li>
-                                <li>106</li>
-                                <li>101</li>
-                                <li>96</li>
-                                <li>115</li>
-                                <li>120</li>
-                                <li>121</li>
-                                <li>140</li>
-                                <li>133</li>
-                                <li>156</li>
-                                <li>175</li>
-                                <li>184</li>
-                                <li>187</li>
-                                <li>162</li>
-                                <li>173</li>
-                                <li>166</li>
-                                <li>159</li>
-                                <li>138</li>
-                                <li>155</li>
-                            </ol>
-                            <ol id="team-blue">
-                               <li>50</li>
-                               <li>56</li>
-                               <li>46</li>
-                               <li>60</li>
-                               <li>54</li>
-                               <li>46</li>
-                               <li>48</li>
-                               <li>40</li>
-                               <li>50</li>
-                               <li>46</li>
-                               <li>44</li>
-                               <li>58</li>
-                               <li>52</li>
-                               <li>40</li>
-                               <li>50</li>
-                               <li>64</li>
-                               <li>56</li>
-                               <li>68</li>
-                               <li>80</li>
-                               <li>94</li>
-                               <li>82</li>
-                               <li>88</li>
-                               <li>78</li>
-                               <li>76</li>
-                               <li>76</li>
-                               <li>74</li>
-                               <li>88</li>
-                               <li>74</li>
-                               <li>68</li>
-                               <li>76</li>
-                               <li>74</li>
-                               <li>74</li>
-                               <li>70</li>
-                               <li>60</li>
-                               <li>52</li>
-                               <li>52</li>
-                               <li>58</li>
-                               <li>66</li>
-                               <li>68</li>
-                               <li>66</li>
-                               <li>70</li>
-                               <li>78</li>
-                               <li>70</li>
-                               <li>58</li>
-                               <li>54</li>
-                               <li>60</li>
-                               <li>74</li>
-                               <li>72</li>
-                               <li>62</li>
-                               <li>74</li>
-                               <li>88</li>
-                               <li>88</li>
-                               <li>96</li>
-                               <li>94</li>
-                               <li>84</li>
-                               <li>94</li>
-                               <li>96</li>
-                               <li>106</li>
-                               <li>112</li>
-                               <li>110</li>
-                               <li>108</li>
-                               <li>100</li>
-                               <li>104</li>
-                               <li>92</li>
-                               <li>82</li>
-                               <li>96</li>
-                               <li>96</li>
-                               <li>104</li>
-                               <li>100</li>
-                               <li>104</li>
-                               <li>118</li>
-                               <li>124</li>
-                               <li>138</li>
-                               <li>130</li>
-                               <li>128</li>
-                               <li>134</li>
-                               <li>120</li>
-                               <li>124</li>
-                               <li>130</li>
-                               <li>122</li>
-                            </ol>
+                    <!-- Demonstrate inline HTML sample values. -->
+                    <ol id="demo-chart-competitors" class="demo-chart-single">
+                        <ol id="team-red">
+                            <li>120</li><li>139</li><li>152</li><li>143</li><li>142</li><li>129</li><li>130</li><li>117</li><li>94</li><li>115</li><li>106</li><li>109</li>
+                            <li>126</li><li>119</li><li>136</li><li>113</li><li>90</li><li>97</li><li>90</li><li>83</li><li>100</li><li>109</li><li>84</li><li>81</li>
+                            <li>100</li><li>107</li><li>112</li><li>109</li><li>92</li><li>105</li><li>128</li><li>121</li><li>128</li><li>141</li><li>116</li><li>95</li>
+                            <li>110</li><li>125</li><li>110</li><li>103</li><li>108</li><li>119</li><li>122</li><li>139</li><li>138</li><li>135</li><li>116</li><li>119</li>
+                            <li>104</li><li>97</li><li>102</li><li>105</li><li>98</li><li>115</li><li>124</li><li>101</li><li>100</li><li>121</li><li>104</li><li>105</li>
+                            <li>84</li><li>85</li><li>106</li><li>101</li><li>96</li><li>115</li><li>120</li><li>121</li><li>140</li><li>133</li><li>156</li><li>175</li>
+                            <li>184</li><li>187</li><li>162</li><li>173</li><li>166</li><li>159</li><li>138</li><li>155</li>
                         </ol>
+                        <ol id="team-blue">
+                            <li>50</li><li>56</li><li>46</li><li>60</li><li>54</li><li>46</li><li>48</li><li>40</li><li>50</li><li>46</li><li>44</li><li>58</li><li>52</li>
+                            <li>40</li><li>50</li><li>64</li><li>56</li><li>68</li><li>80</li><li>94</li><li>82</li><li>88</li><li>78</li><li>76</li><li>76</li><li>74</li>
+                            <li>88</li><li>74</li><li>68</li><li>76</li><li>74</li><li>74</li><li>70</li><li>60</li><li>52</li><li>52</li><li>58</li><li>66</li><li>68</li>
+                            <li>66</li><li>70</li><li>78</li><li>70</li><li>58</li><li>54</li><li>60</li><li>74</li><li>72</li><li>62</li><li>74</li><li>88</li><li>88</li>
+                            <li>96</li><li>94</li><li>84</li><li>94</li><li>96</li><li>106</li><li>112</li><li>110</li><li>108</li><li>100</li><li>104</li><li>92</li>
+                            <li>82</li><li>96</li><li>96</li><li>104</li><li>100</li><li>104</li><li>118</li><li>124</li><li>138</li><li>130</li><li>128</li><li>134</li>
+                            <li>120</li><li>124</li><li>130</li><li>122</li>
+                        </ol>
+                    </ol>
                         
-                        <!-- Demonstrate custom chrome. -->
-                        <div id="demo-chart-moon" class="demo-chart"></div>
+                    <p>
+                        Example 2 &mdash; custom sample labels, custom colors, no grid, custom scrollbar, background gradient
+                    </p>
                         
-                        <!-- Demonstrate chart synchronization. -->
-                        <div id="demo-chart-synced-a" class="demo-chart"></div>
-                        <div id="demo-chart-synced-b" class="demo-chart"></div>
+                    <!-- Demonstrate custom chrome. -->
+                    <div id="demo-chart-moon" class="demo-chart-single"></div>
                     
-                    </div>
+                    <p>
+                        Example 3 &mdash; synchronized charts, pure HTML rendering path (right side)
+                    </p>
+                    
+                    <div class="demo-chart-container-side-by-side">
+                        <!-- Demonstrate chart synchronization. -->
+                        <div id="demo-chart-synced-a" class="demo-chart-multi"></div>
+                        <div id="demo-chart-synced-b" class="demo-chart-multi"></div>
+                    </div>                     
                     
                     <a name="usage">Usage</a>
                     
@@ -573,7 +437,7 @@ POSSIBILITY OF SUCH DAMAGES.</pre>
         </div>  
         
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
-        <script src="gh-pages-dist/jquery-zig-0.2.js"></script>
+        <script src="gh-pages-dist/jquery-zig-0.3.js"></script>
         <script>
             /* 
              * Poor man's PRNG.
@@ -590,6 +454,8 @@ POSSIBILITY OF SUCH DAMAGES.</pre>
                 
                 $("#demo-chart-competitors").zig({
                     unit: "$"
+                  , width: 800
+                  , sampleRenderWidth: 10
                   , verticalGridSegments: 10
                   , borderColor: "transparent"
                   , overflow: "clip"
@@ -609,7 +475,10 @@ POSSIBILITY OF SUCH DAMAGES.</pre>
                 
                 
                 $("#demo-chart-moon").zig({
-                    unit: "mm"
+                    unit: "kPa"
+                  , width: 800
+                  , height: 400
+                  , sampleRenderWidth: 10
                   , showVerticalGrid: false
                   , canvasFillStyle: "gradient"                  
                   , canvasColor: "#000"
@@ -626,7 +495,7 @@ POSSIBILITY OF SUCH DAMAGES.</pre>
                             id: "test1"
                           , lineColor: "#888"
                           , fillColor: "#888"
-                          , highlightTextColor: "#000"
+                          , highlightTextColor: "#ddd"
                           , highlightBackgroundColor: "#888"
                           , highlightBorderColor: "#000"
                         }
@@ -642,6 +511,7 @@ POSSIBILITY OF SUCH DAMAGES.</pre>
                 
                 $("#demo-chart-synced-a").zig({
                     unit: "kbps"
+                  , width: 390
                   , height: 300
                   , graphs: [
                         {
@@ -675,6 +545,7 @@ POSSIBILITY OF SUCH DAMAGES.</pre>
                 $("#demo-chart-synced-b").zig({
                     unit: "ms"
                   , defaultRenderPath: "html"
+                  , width: 390
                   , height: 300
                   , graphs: [
                         {
