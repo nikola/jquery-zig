@@ -1,5 +1,5 @@
 /*!
- * jquery-zig Plugin Version 0.2-20110506
+ * jquery-zig Plugin Version 0.4-20110508
  * Copyright 2011, Nikola Klaric.
  *
  * https://github.com/nikola/jquery-zig
