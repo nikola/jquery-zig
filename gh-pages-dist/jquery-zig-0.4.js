@@ -1168,14 +1168,11 @@
              * Use heuristic to normalize pan distance.
              */
             if ($.browser.mozilla && "HORIZONTAL_AXIS" in event) {
-                var delta = event.detail / 3 * 12;
+                var delta = event.detail * 12;
             } else if ($.browser.webkit && "wheelDeltaX" in event) {
-                var deltaX = event.wheelDeltaX / -120,
-                    deltaY = event.wheelDeltaY / -120,
+                var deltaX = event.wheelDeltaX / -3,
+                    deltaY = event.wheelDeltaY / -3,
                     delta = deltaX || deltaY;
-                if (/chrome/i.test(navigator.userAgent)) {
-                    delta *= 40;
-                }
             } else if (($.browser.msie || $.browser.opera) && "wheelDelta" in event) {
                 var delta = event.wheelDelta / -3;
             } else {

@@ -19,7 +19,7 @@
         <div id="wrapper-top">
             <div id="header">
                 <div id="masthead">
-                    jquery-zig plugin<span id="head-version">0.3</span><span id="menu"><a href="#about">About</a> | <a href="#demo">Demo</a> | <a href="#usage">Usage</a> | <a href="#license">License</a> | <a href="#download">Download</a></span>
+                    jquery-zig plugin<span id="head-version">0.4</span><span id="menu"><a href="#about">About</a> | <a href="#demo">Demo</a> | <a href="#usage">Usage</a> | <a href="#api">API</a> | <a href="#license">License</a> | <a href="#download">Download</a></span>
                 </div>
             </div>
             
@@ -27,8 +27,23 @@
                 <div id="content">
                     <a name="about">About</a>
                     <p>
-                        jquery-zig is a plugin for jQuery that draws interactive line chart diagrams. All modern browsers supported.
+                        jquery-zig is a plugin for jQuery that draws interactive line chart diagrams.
                     </p>
+                    <p>
+                        <strong>Features</strong>
+                    </p>
+                    <ul class="features">
+                        <li>&hellip; add samples programmatically, or supply initial samples right in the HTML source</li>
+                        <li>&hellip; automatic scaling of charts to the max. sample value</li>
+                        <li>&hellip; automatic overflow handling of graphs: clip or scroll</li>
+                        <li>&hellip; synchronize two or more charts: auto-moving cursor and auto-scrolling</li>
+                        <li>&hellip; fast navigation with mouse-wheel or trackpad</li>
+                        <li>&hellip; custom crosshair cursor for painless highlighting of samples (in <a href="http://en.wikipedia.org/wiki/Webkit">supported</a> <a href="http://en.wikipedia.org/wiki/Mozilla_Firefox">browsers</a>)</li>
+                        <li>&hellip; <a href="#api">API support</a>: add samples and labels, purge graphs, and more to come</li>
+                        <li>&hellip; fully customizable: change scrollbar size, colors, line styles, column widths, and more</li>
+                        <li>&hellip; uses <a href="http://en.wikipedia.org/wiki/Canvas_element">&lt;canvas&gt;</a> in modern browsers, pure HTML DOM in <a href="http://en.wikipedia.org/wiki/Internet_Explorer_7">legacy</a> <a href="http://en.wikipedia.org/wiki/Internet_Explorer_8">browsers</a></li>
+                    </ul>
+                    
                     <br>
                     <p>
                         <strong>Author</strong> <a href="https://github.com/nikola">Nikola Klaric (github.com/nikola)</a>
@@ -37,23 +52,23 @@
                         <strong>Source</strong> <a href="https://github.com/nikola/jquery-zig">https://github.com/nikola/jquery-zig</a>
                     </p>
                     <p>
-                        <strong>Latest release version</strong> 0.3-20110507
+                        <strong>Latest release version</strong> 0.4-20110508
                     </p>
                     <p>
                         <strong>License</strong> <a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GNU General Public License (GPL) Version 2</a>
                     </p>
                     <p>
-                        <strong>Code size</strong> &#8776; 8 KB (minified &amp; gzipped)
+                        <strong>Code size</strong> &#8776; 8.9 KB (minified &amp; gzipped)
                     </p>
                     
                     <a name="demo">Demo</a>
                     
                     <p>
-                        Example 1 &mdash; initial HTML sample values, clipped to 80 visible samples, custom vertical grid, 10px sample column width, updated every second
+                        Example 1 &mdash; initial HTML sample values, clipped to 80 visible samples, custom vertical grid, 10px sample column width, updated every 5 seconds
                     </p>
                         
                     <!-- Demonstrate inline HTML sample values. -->
-                    <ol id="demo-chart-competitors" class="demo-chart-single">
+                    <div id="demo-chart-competitors" class="demo-chart-single">
                         <ol id="team-red">
                             <li>120</li><li>139</li><li>152</li><li>143</li><li>142</li><li>129</li><li>130</li><li>117</li><li>94</li><li>115</li><li>106</li><li>109</li>
                             <li>126</li><li>119</li><li>136</li><li>113</li><li>90</li><li>97</li><li>90</li><li>83</li><li>100</li><li>109</li><li>84</li><li>81</li>
@@ -72,7 +87,7 @@
                             <li>82</li><li>96</li><li>96</li><li>104</li><li>100</li><li>104</li><li>118</li><li>124</li><li>138</li><li>130</li><li>128</li><li>134</li>
                             <li>120</li><li>124</li><li>130</li><li>122</li>
                         </ol>
-                    </ol>
+                    </div>
                         
                     <p>
                         Example 2 &mdash; custom sample labels, custom colors, no grid, custom scrollbar, background gradient
@@ -82,7 +97,7 @@
                     <div id="demo-chart-moon" class="demo-chart-single"></div>
                     
                     <p>
-                        Example 3 &mdash; synchronized charts, pure HTML rendering path (right side)
+                        Example 3 &mdash; synchronized charts, pure HTML DOM rendering path (right side)
                     </p>
                     
                     <div class="demo-chart-container-side-by-side">
@@ -108,7 +123,7 @@
                     </blockquote>
                     
                     <p>
-                        Step 3. Write a box-model container for your chart, e.g.
+                        Step 3. Write a block-model container for your chart, e.g.
                     </p>
                     <blockquote>
                         &lt;div id=&quot;myChart&gt;&lt;/div&gt;
@@ -122,10 +137,197 @@
                         $(&quot;#myChart&quot;).zig();
                     </blockquote>
                     
+                    <p>
+                        That is all.
+                    </p>
                     <br>
                     <p>
-                        (Full documentation to be published soon ...)
+                        The initial call to .zig() will accept several optional parameters via &lt;Object&gt; notation, e.g.
                     </p>
+                    <blockquote>
+                        $(&quot;#myChart&quot;).zig({<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;width: 500, height: 500, unit: "km", graphs: [<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;id: &quot;runner-A&quot;<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, lineColor: &quot;#888&quot;<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, fillColor: &quot;none&quot;<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;]<br>
+                        });
+                    </blockquote>
+                    <p> 
+                        Reasonable default options will be used for any parameter omitted.
+                    </p>
+                    <br>
+                    <dl>
+                        <dt>width : 400</dt>
+                        <dd>
+                            Outer width of chart in pixels (excluding border but including scrollbars).
+                        </dd>
+
+                        <dt>height : 200</dt>
+                        <dd>
+                            Outer height of chart in pixels (excluding border but including scrollbars).
+                        </dd>
+
+                        <dt>sampleRenderWidth : 5</dt>
+                        <dd>
+                            Size of each rendered sample column in pixels, i.e. the x-distance each sample will occupy when rendered.
+                        </dd>
+
+                        <dt>overflow : "scroll"</dt>
+                        <dd>
+                            Overflow behavior when number of samples exceeds the maximum as specified by the chart dimensions.
+                            Available options: "scroll" or "clip". In the latter case, samples will be clipped from the left side of the chart.
+                        </dd>
+
+                        <dt>unit : ""</dt>
+                        <dd>
+                            The unit of samples added to the chart.
+                        </dd>
+        
+                        <dt>graphs : [ { id: "default" } ]</dt>
+                        <dd>
+                            An &lt;Array&gt; of empty graphs to be created in the chart.<br>
+                            
+                            Each graph is defined by several properties, of which only id is mandatory.<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;id : The id of the graph, which can be used later to add samples to that specific graph.<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;lineColor : The line color of the graph. If omitted, a preset color is used.<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;fillColor : The fill color of the graph. Setting this to "none" will draw outlined shapes instead of filled shapes. 
+                            If omitted, a preset color is used.<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;highlightTextColor : The text color of sample readings, defaults to coordinatesColor (see below).<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;highlightBackgroundColor : The background color of sample readings, defaults to canvasColor (see below).<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;highlightBorderColor : The border color of sample readings, defaults to lineColor (see above).
+                        </dd>
+                        <dt>canvasColor : "#fff"</dt>
+                        <dd>
+                            CSS color code for the background fill color of the chart.
+                        </dd>
+        
+                        <dt>borderColor : "#444"</dt>
+                        <dd>
+                            CSS color code for chart box border. Also supported: "transparent".
+                        </dd>
+        
+                        <dt>crosshairColor : "#000"</dt>
+                        <dd>
+                            CSS color code of the crosshair cursor.
+                        </dd>
+        
+                        <dt>coordinatesColor : "#000"</dt>
+                        <dd>
+                            CSS color code of the coordinate readings.
+                        </dd>
+        
+                        <dt>scaleColor : "#000"</dt>
+                        <dd>
+                            CSS color code of the scale text that denotes the y-axis.
+                        </dd>
+        
+                        <dt>backgroundColor : "#fff"</dt>
+                        <dd>
+                            CSS color for background elements in the chart. This is not identical to the background color of the chart.
+                        </dd>
+        
+                        <dt>showCoordinates : true</dt>
+                        <dd>
+                            Render coordinate readings if true.
+                        </dd>
+        
+                        <dt>showVerticalGrid : true</dt>
+                        <dd>
+                            Render a vertical grid if true.
+                        </dd>
+        
+                        <dt>verticalGridSegments : 4</dt>
+                        <dd>
+                            Number of vertical grid segments (not lines).
+                        </dd>
+        
+                        <dt>verticalGridLineStyle : "1px dotted #444"</dt>
+                        <dd>
+                            CSS border-style definition for vertical grid lines (not segments).
+                        </dd>
+        
+                        <dt>verticalGridOpacity : 0.5</dt>
+                        <dd>
+                            CSS opacity of vertical grid segments/lines.
+                        </dd>
+        
+                        <dt>scrollbarHeight : 8</dt>
+                        <dd>
+                            Height of scrollbar scroller in pixels.
+                        </dd>
+        
+                        <dt>scrollbarColor : "#aaa"</dt>
+                        <dd>
+                            CSS color code of the scrollbar scroller.
+                        </dd>
+        
+                        <dt>canvasFillStyle: "solid"</dt>
+                        <dd>
+                            Background fill color style of the chart. Available options: "solid" or "gradient".
+                        </dd>
+        
+                        <dt>canvasGradientStart : "#000000"
+                        <dd>
+                            CSS color code for the start position in the background gradient of the chart.
+                        </dd>
+        
+                        <dt>canvasGradientStop : "#666277"
+                        <dd>
+                            CSS color code for the stop position in the background gradient of the chart.
+                        </dd>
+                        
+                        <dt>defaultRenderPath : "auto"</dt>
+                        <dd>
+                            Determine the render path. Available options: "auto" (which wil use &lt;canvas&gt; if supported) or "html".
+                        </dd>                        
+                    </dl>
+                    
+                    <a name="api">API</a>
+                    
+                    <p>
+                        After an element has been initialized with .zig(), API methods will become available on that element through the standard method-call pattern
+                        of jQuery plugins:
+                    </p>
+                    <blockquote>
+                        $(&quot;#myChart&quot;).zig(&quot;methodName&quot;, param1, param2, &hellip;);
+                    </blockquote>
+                    <br>
+                    <dl>
+                        <dt>addSamples ( [ &lt;String&gt; id, &lt;Array&gt; samples | &lt;Number&gt; sample, &lt;Array&gt; labels | &lt;Number&gt; label ] | &lt;Object&gt; samples, &lt;Object&gt; labels)</dt>
+                        <dd>
+                            Add one or more samples and labels to the given graph. If id is omitted, the first graph as defined during initialization will be assumed.<br>
+                            
+                            Parameters can be supplied using any of these example syntaxes:
+                            <ol class="parameter-permutations">
+                                <li>addSamples ( 150 ) &rarr; add sampe value 150 to the first graph in the chart</li>
+                                <li>addSamples ( &quot;graphId&quot;, 150 ) &rarr; add sampe value 150 to the graph with id &quot;graphId&quot;</li>
+                                <li>addSamples ( &quot;graphId&quot;, 150, &quot;label1&quot; ) &rarr; add sampe value 150 to the graph with id &quot;graphId&quot;, and label that sample with &quot;label1&quot;</li>
+                                <li>addSamples ( &quot;graphId&quot;, [110, 190, 120, 30, 0, 70] ) &rarr; add sampe values 110&hellip;70 to the graph with id &quot;graphId&quot;</li>
+                                <li>addSamples ( &quot;graphId&quot;, [110, 0, 70], [&quot;label1&quot;, &quot;label2&quot;, &quot;label3&quot;] ) &rarr; add sample values 110&hellip;70 to the graph with id &quot;graphId&quot;, and label these samples</li>
+                                <li>addSamples ( {&quot;graphId&quot;: [110, 0, 70]} ) &rarr; add sample values 110&hellip;70 to the graph with id &quot;graphId&quot;</li>
+                                <li>addSamples ( {&quot;graphId&quot;: [110, 0, 70]},  {&quot;graphId&quot;: [&quot;label1&quot;, &quot;label2&quot;, &quot;label3&quot;]}) &rarr; add sample values 110&hellip;70 to the graph with id &quot;graphId&quot;, and label these samples</li>
+                            </ol>
+                        </dd>
+                        
+                        <dt>synchronize ( &lt;String&gt; selector )</dt>
+                        <dd>
+                            Synchronize the chart with all charts that match the given selector. <a href="#demo">See example 3 above</a> for the effect in action. 
+                            Synchronization is bi-directional: Whenever you move the mouse or scroll in either chart, the other charts will be updated accordingly.
+                        </dd>
+                        
+                        <dt>purge ( &lt;String&gt; id )</dt>
+                        <dd>
+                            Purge all samples from the given graph. If there are no graphs left in the chart, labels will also be purged. 
+                        </dd>
+                        
+                        <dt>purgeAll ( )</dt>
+                        <dd>
+                            Purge all graphs. This will also purge labels.
+                        </dd>    
+                    </dl>
                     
                     <a name="license">License</a>
                     <p>
@@ -436,10 +638,11 @@ POSSIBILITY OF SUCH DAMAGES.</pre>
             <div id="footer">Copyright 2011 Nikola Klaric. All rights reserved.</div>
         </div>  
         
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
-        <script src="gh-pages-dist/jquery-zig-0.3.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js"></script>
+        <script src="gh-pages-dist/jquery-zig-0.4.js"></script>
         <script>
-            /* 
+            
+            /** 
              * Poor man's PRNG.
              */
             var rand = new function () {
@@ -450,6 +653,38 @@ POSSIBILITY OF SUCH DAMAGES.</pre>
                 }
             };  
             
+            
+            /**
+             * Update the chart every 5 seconds, add up to 500 samples in total. 
+             */
+            function updateCompetitorsChart() {
+                bufferTeamRed.push((rand() % 50) - 23 + bufferTeamRed[bufferTeamRed.length - 1]);
+                bufferTeamBlue.push((rand() % 30) - 13 + bufferTeamBlue[bufferTeamBlue.length - 1]);
+                
+                $("#demo-chart-competitors").zig("addSamples", {
+                    "team-red": bufferTeamRed[bufferTeamRed.length - 1]
+                  , "team-blue": bufferTeamBlue[bufferTeamBlue.length - 1]
+                });
+               
+                if (bufferTeamRed.length < 500) {
+                    setTimeout(updateCompetitorsChart, 5000);
+                }
+            }
+            
+            var bufferTeamRed = [120];
+            for (var c = 0; c < 79; c++) {
+                bufferTeamRed.push((rand() % 50) - 25 + bufferTeamRed[bufferTeamRed.length - 1]);
+            }
+            
+            var bufferTeamBlue = [50];
+            for (var c = 0; c < 79; c++) {
+                bufferTeamBlue.push((rand() % 30) - 14 + bufferTeamBlue[bufferTeamBlue.length - 1]);
+            }
+            
+            
+            /**
+             * Init charts.
+             */
             $(document).ready(function () {
                 
                 $("#demo-chart-competitors").zig({
@@ -477,7 +712,7 @@ POSSIBILITY OF SUCH DAMAGES.</pre>
                 $("#demo-chart-moon").zig({
                     unit: "kPa"
                   , width: 800
-                  , height: 400
+                  , height: 300
                   , sampleRenderWidth: 10
                   , showVerticalGrid: false
                   , canvasFillStyle: "gradient"                  
@@ -576,18 +811,6 @@ POSSIBILITY OF SUCH DAMAGES.</pre>
                     ]
                 });
                 
-                var buffer = [120];
-                for (var c = 0; c < 79; c++) {
-                    buffer.push((rand() % 50) - 25 + buffer[buffer.length - 1]);
-                }
-                
-                
-                var buffer = [50];
-                for (var c = 0; c < 79; c++) {
-                    buffer.push((rand() % 30) - 14 + buffer[buffer.length - 1]);
-                }
-                
-                
                 
                 var buffer = [170], labels = [];
                 for (var c = 0; c < 159; c++) {
@@ -595,18 +818,14 @@ POSSIBILITY OF SUCH DAMAGES.</pre>
                     var date = new Date(c * 3600 * 1000 * 24);
                     labels.push((date.getUTCMonth() + 1) + "/" + date.getUTCDate() + "/" + date.getUTCFullYear());
                 }
-                
                 $("#demo-chart-moon").zig("addSamples", "test1", buffer, labels);
     
                 var buffer = [330];
                 for (var c = 0; c < 159; c++) {
                     buffer.push((rand() % 30) - 15 + buffer[buffer.length - 1]);
                 }
-                
                 $("#demo-chart-moon").zig("addSamples", "test2", buffer);
-                
-                
-                
+
                 
                 var buffer = [1500];
                 for (var c = 0; c < 299; c++) {
@@ -669,8 +888,11 @@ POSSIBILITY OF SUCH DAMAGES.</pre>
                 }
                 $("#demo-chart-synced-b").zig("addSamples", "line-violet", buffer);
                 
+                
                 $("#demo-chart-synced-a").zig("synchronize", "#demo-chart-synced-b");
-            
+                
+                
+                setTimeout(updateCompetitorsChart, 5000);
             });              
         </script>
     </body>
