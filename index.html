@@ -19,7 +19,7 @@
         <div id="wrapper-top">
             <div id="header">
                 <div id="masthead">
-                    jquery-zig plugin<span id="head-version">0.4</span><span id="menu"><a href="#about">About</a> | <a href="#demo">Demo</a> | <a href="#usage">Usage</a> | <a href="#api">API</a> | <a href="#license">License</a> | <a href="#download">Download</a></span>
+                    jquery-zig plugin<span id="head-version">0.5</span><span id="menu"><a href="#about">About</a> | <a href="#demo">Demo</a> | <a href="#usage">Usage</a> | <a href="#api">API</a> | <a href="#license">License</a> | <a href="#download">Download</a></span>
                 </div>
             </div>
             
@@ -39,7 +39,7 @@
                         <li>&hellip; synchronize two or more charts: auto-moving cursor and auto-scrolling</li>
                         <li>&hellip; fast navigation with mouse-wheel or trackpad</li>
                         <li>&hellip; custom crosshair cursor for painless highlighting of samples (in <a href="http://en.wikipedia.org/wiki/Webkit">supported</a> <a href="http://en.wikipedia.org/wiki/Mozilla_Firefox">browsers</a>)</li>
-                        <li>&hellip; <a href="#api">API support</a>: add samples and labels, purge graphs, and more to come</li>
+                        <li>&hellip; <a href="#api">API support</a>: add samples and labels, compute statistics (min, max, mean, median, variance, standard deviation), purge graphs, and more</li>
                         <li>&hellip; fully customizable: change scrollbar size, colors, line styles, column widths, and more</li>
                         <li>&hellip; uses <a href="http://en.wikipedia.org/wiki/Canvas_element">&lt;canvas&gt;</a> in modern browsers, pure HTML DOM in <a href="http://en.wikipedia.org/wiki/Internet_Explorer_7">legacy</a> <a href="http://en.wikipedia.org/wiki/Internet_Explorer_8">browsers</a></li>
                     </ul>
@@ -52,7 +52,7 @@
                         <strong>Source</strong> <a href="https://github.com/nikola/jquery-zig">https://github.com/nikola/jquery-zig</a>
                     </p>
                     <p>
-                        <strong>Latest release version</strong> 0.4-20110508
+                        <strong>Latest release version</strong> 0.5-20110508
                     </p>
                     <p>
                         <strong>License</strong> <a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GNU General Public License (GPL) Version 2</a>
@@ -308,7 +308,7 @@
                                 <li>addSamples ( &quot;graphId&quot;, [110, 190, 120, 30, 0, 70] ) &rarr; add sampe values 110&hellip;70 to the graph with id &quot;graphId&quot;</li>
                                 <li>addSamples ( &quot;graphId&quot;, [110, 0, 70], [&quot;label1&quot;, &quot;label2&quot;, &quot;label3&quot;] ) &rarr; add sample values 110&hellip;70 to the graph with id &quot;graphId&quot;, and label these samples</li>
                                 <li>addSamples ( {&quot;graphId&quot;: [110, 0, 70]} ) &rarr; add sample values 110&hellip;70 to the graph with id &quot;graphId&quot;</li>
-                                <li>addSamples ( {&quot;graphId&quot;: [110, 0, 70]},  {&quot;graphId&quot;: [&quot;label1&quot;, &quot;label2&quot;, &quot;label3&quot;]}) &rarr; add sample values 110&hellip;70 to the graph with id &quot;graphId&quot;, and label these samples</li>
+                                <li>addSamples ( {&quot;graphId&quot;: [110, 0, 70]},  [&quot;label1&quot;, &quot;label2&quot;, &quot;label3&quot;]) &rarr; add sample values 110&hellip;70 to the graph with id &quot;graphId&quot;, and label these samples</li>
                             </ol>
                         </dd>
                         
@@ -639,7 +639,7 @@ POSSIBILITY OF SUCH DAMAGES.</pre>
         </div>  
         
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js"></script>
-        <script src="gh-pages-dist/jquery-zig-0.4.js"></script>
+        <script src="gh-pages-dist/jquery-zig-0.5.js"></script>
         <script>
             
             /** 
