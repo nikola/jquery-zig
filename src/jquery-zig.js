@@ -1,5 +1,5 @@
 /*!
- * jquery-zig Plugin Version 0.4-20110508
+ * jquery-zig Plugin Version 0.5-20110508
  * Copyright 2011, Nikola Klaric.
  *
  * https://github.com/nikola/jquery-zig
@@ -1725,13 +1725,13 @@
             /*
              * Assign labels to samples.
              */
-            if (!$.type(labels) == "string") {
+            if (!$.type(labels) == "number") {
                 labels = [labels];
             }
             if ($.isArray(labels) && labels.length) {
-                var s = 0;
+                var s = 0, offset = Math.max(continueIndex + 1, 0);
                 do {
-                    base.sampleLabels[sampleCount + s] = labels[s];
+                    base.sampleLabels[offset + s] = labels[s];
                 } while (++s < labels.length);
             }
 
@@ -1784,10 +1784,9 @@
             }
 
             if ($.type(samples) == "object") {
-                labels = labels || {};
                 for (var set in samples) {
                     if (samples.hasOwnProperty(set)) {
-                        _addSamples(set, samples[set], labels[set]);
+                        _addSamples(set, samples[set], labels);
                     }
                 }
             } else {
@@ -1876,6 +1875,109 @@
         };
 
 
+        /**
+         * Return the smallest sample value in the given graph.
+         */
+        base.getStatMin = function (id) {
+            if (!(id in base.rawSamples)) {
+                throw "Must specify a valid diagram ID as first parameter.";
+            } else {
+                return Math.min.apply(Math, base.rawSamples[id]);
+            }
+        };
+        
+        
+        /**
+         * Return the largest sample value in the given graph.
+         */
+        base.getStatMax = function (id) {
+            if (!(id in base.rawSamples)) {
+                throw "Must specify a valid diagram ID as first parameter.";
+            } else {
+                return Math.max.apply(Math, base.rawSamples[id]);
+            }
+        };
+        
+        
+        /**
+         * Return the arithmetic mean of sample values in the given graph.
+         */
+        base.getStatMean = base.getStatArithmeticMean = function (id) {
+            if (!(id in base.rawSamples)) {
+                throw "Must specify a valid diagram ID as first parameter.";
+            } else {
+                var samples = base.rawSamples[id], length = samples.length, counter = length, sum = 0;
+                while (counter--) {
+                    sum += samples[counter];
+                }
+                return sum / length;
+            }
+        };
+        
+        
+        /**
+         * Return the geometric mean of sample values in the given graph.
+         */
+        base.getStatGeometricMean = function (id) {
+            if (!(id in base.rawSamples)) {
+                throw "Must specify a valid diagram ID as first parameter.";
+            } else {
+                var Mlog = Math.log, samples = base.rawSamples[id], length = samples.length, counter = length, log = 0;
+                while (counter--) {
+                    log += Mlog(samples[counter]);
+                }
+                return Math.pow(Math.E, log / length);
+            }
+        };
+        
+  
+        /**
+         * Return the median of sample values in the given graph.
+         */
+        base.getStatMedian = function (id) {
+            if (!(id in base.rawSamples)) {
+                throw "Must specify a valid diagram ID as first parameter.";
+            } else {
+                var samples = base.rawSamples[id].concat().sort(function (a, b) { return a-b; }), 
+                    length = samples.length;
+                if (length % 2) {
+                    return samples[length >>> 1];
+                } else {
+                    return (samples[length / 2 - 1] + samples[length / 2]) / 2;
+                }
+            }
+        }            
+        
+
+        /**
+         * Return the variance of sample values in the given graph.
+         */
+        base.getStatVariance = function (id) {
+            if (!(id in base.rawSamples)) {
+                throw "Must specify a valid diagram ID as first parameter.";
+            } else {
+                var Mpow = Math.pow, samples = base.rawSamples[id], length = samples.length, counter = length, variance = 0,
+                    mean = base.getStatArithmeticMean(id);
+                while (counter--) {
+                    variance += Math.pow(samples[counter] - mean, 2);
+                }
+                return variance / (length - 1);
+            }
+        };
+        
+                
+        /**
+         * Return the standard deviation of sample values in the given graph.
+         */
+        base.getStatStdDev = function (id) {
+            if (!(id in base.rawSamples)) {
+                throw "Must specify a valid diagram ID as first parameter.";
+            } else {
+                return Math.sqrt(base.getStatVariance(id));
+            }
+        };
+        
+        
         /**
          * Return a snapshot of the current chart as an <img>.
          */
@@ -2128,8 +2230,8 @@
             if (!this.data("plugin.zig")) {
                 throw "Selected element(s) must be initialized first before calling methods through jQuery.zig";
             } else {
-                this.data("plugin.zig")[options].apply(this, Array.prototype.slice.call(arguments, 1));
-                return this.data("plugin.zig").$node;
+                var result = this.data("plugin.zig")[options].apply(this, Array.prototype.slice.call(arguments, 1));
+                return (!options.indexOf("getStat")) ? result : this.data("plugin.zig").$node;
             }
         } else if ($.type(options) == "object" || !options) {
             return this.each(function () {
