@@ -1,5 +1,5 @@
 /*!
- * jquery-zig Plugin Version 0.5-20110508
+ * jquery-zig Plugin Version 0.5.1-20111024
  * Copyright 2011, Nikola Klaric.
  *
  * https://github.com/nikola/jquery-zig
@@ -1251,17 +1251,20 @@
          * Handle the mouse entering the chart. 
          */
         function _handleMouseOver(event) {
-            if (!base.hasFocus && !base.isScrolling) {
+            if (!base.hasFocus) {
                 base.hasFocus = true;
                 
-                base.useCustomCursor && base.cursors.css("display", "block");
-                base.options.showCoordinates && base.coordinates.css("display", "block");
+                if (!base.isScrolling) {
                 
-                /* ... */
-                var counter = base.synchronizedTo.length;
-                while (counter--) {
-                    base.synchronizedTo[counter].enableSyncCursor().obscureVerticalGrid();
-                }                
+                    base.useCustomCursor && base.cursors.css("display", "block");
+	                base.options.showCoordinates && base.coordinates.css("display", "block");
+	                
+	                /* ... */
+	                var counter = base.synchronizedTo.length;
+	                while (counter--) {
+	                    base.synchronizedTo[counter].enableSyncCursor().obscureVerticalGrid();
+	                }
+	            }                
             }
         }
 
@@ -1271,14 +1274,21 @@
          */
         function _handleMouseOut(event) {
             if (!base.isScrolling) {
-                base.hasFocus = false;
-
                 /* Check that mouse cursor actually left the canvas. */
                 if (!!event && $(event.relatedTarget).closest("#" + base.id).size()) {
                     return;
+                } else {
+                    base.hasFocus = false;
                 }
     
-                _clearGraphTrace();
+                _clearGraphTrace(true);
+            } else { // TODO: only if cursor actually left the track
+                base.isScrolling = false;
+
+                /* Constrain and save scroller position. */
+                base.scrollPosition = Math.min(base.scrollMax,
+                    Math.max(0, base.scrollPosition - base.lastScrollDiff)
+                );
             }
         }
 
