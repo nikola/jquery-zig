@@ -1,56 +1,52 @@
 /*!
- * jquery-zig Plugin Version 0.5.1-20111024
- * Copyright 2011, Nikola Klaric.
+ * jquery-zig Plugin Version 0.6-20130108
+ * Copyright 2013, Nikola Klaric.
  *
  * https://github.com/nikola/jquery-zig
  *
- * Licensed under the GNU General Public License (GPL) Version 2.
+ * Licensed under the GNU Lesser General Public License (LGPL) Version 3.
  *
- * For the full license text see the enclosed GPL-LICENSE.TXT, or go to:
- * https://github.com/nikola/jquery-zig/GPL-LICENSE.txt
- *
- * If you are using this plugin for commercial purposes, please consider
- * purchasing a commercial license. Visit the project homepage for more
- * details.
+ * For the full license text see the enclosed LGPL-LICENSE.TXT, or go to:
+ * https://github.com/nikola/jquery-zig/LGPL-LICENSE.txt
  */
-(function ($) {
+;~
+function ($) {
 
     /**
      * A jQuery plugin that draws interactive line chart diagrams.
-     * All modern browsers supported.
      */
     $.zig = function (node, options) {
 
-        var base = this;
-        base.$node = $(node);
+        var self = this;
+        self.$node = $(node);
 
         /* Prevent repeated initialization. */
-        if (!!base.$node.data("plugin.zig")) {
+        if (!!self.$node.data("plugin.zig")) {
             return;
         } else {
             /* Add self-reference for method access. */
-            base.$node.data("plugin.zig", base);
+            self.$node.data("plugin.zig", self);
         }
 
         /* Determine this early. */
-        base.id = base.$node.attr("id");
+        self.id = self.$node.attr("id");
 
         /*
          * Only handle block-style elements.
          */
-        if (base.$node.css("display") != "block" && base.$node.css("display") != "inline-block") {
+        if (self.$node.css("display") != "block" && self.$node.css("display") != "inline-block") {
             throw "Only block-style elements are supported at this time.";
         }
 
         /*
-         * Functor of the render path for ... rendering paths.
+         * Functor of the render path for rendering paths.
          */
         var _functorRenderSamples = null;
 
         /*
          * Persistent instance data.
          */
-        $.extend(base, {
+        $.extend(self, {
 
             /* Basic configuration options. */
             config: {}
@@ -81,6 +77,9 @@
 
             /* Indicates whether the mouse currently traces a graph. */
           , isOnPath: false
+          
+            /* Indicates whether graph statistics are being displayed. */
+          , isModeGraphStats: false
           
             /* True when the client cursor entered the chart area. */
           , hasFocus: false
@@ -128,10 +127,18 @@
           , positionValue: null
           , positionReadings: null
 
-          /* State of coordinate readings. */
+            /* State of coordinate readings. */
           , horizontalOrientation: null
           , sampleReadings: {}
           , lastHorizontalX: null
+          
+            /* ... */
+          , overlayRange: null
+          , overlayStdDev: null
+          , overlayMean: null
+          
+            /* ... */
+          , legend: null
 
         });
 
@@ -139,15 +146,15 @@
         /**
          * Initialize this instance and render chrome and inline sample data.
          */
-        base.__init__ = function () {
+        self.__init__ = function () {
             /*
              * Expose public interface.
              */
             if (!($.zig.constants.MAGIC in $.prototype.zig)) {
                 $.prototype.zig[$.zig.constants.MAGIC] = true;
-                for (var symbol in base) {
-                    if (base.hasOwnProperty(symbol) && /^[a-z][a-zA-Z]+$/.test(symbol)
-                            && $.type(base[symbol]) == "function") {
+                for (var symbol in self) {
+                    if (self.hasOwnProperty(symbol) && /^[a-z][a-zA-Z]+$/.test(symbol)
+                            && $.type(self[symbol]) == "function") {
                         $.zig[symbol] = symbol;
                     }
                 }
@@ -162,48 +169,232 @@
 
                 /* True if mouse down/up events have been bound. */
                 $.prototype.zig.hasMouseEventsBound = false;
+                
+                
+                // $.prototype.zig.handleMouseOut = function (event) {
+		        // 	var instance = $(event.target).data("backref.zig");
+		        	
+		        	// if (event.relatedTarget == null)
+		        	//      return;
+
+		        //     if (!instance.isScrolling) {
+
+		                /* Check that mouse cursor actually left the canvas. */
+		                /* if (!!event && $(event.relatedTarget).closest("#" + self.id).size()) {
+		                    return;
+		                } */
+		    			
+		    			// instance.hasFocus = false;
+		    			
+	                // _clearGraphTrace(true);
+		            // } else { // TODO: only if cursor actually left the track
+		            //     if (instance) instance.isScrolling = false;
+		
+		                /* Constrain and save scroller position. */
+		            //    instance.scrollPosition = Math.min(instance.scrollMax,
+		            //        Math.max(0, instance.scrollPosition - instance.lastScrollDiff)
+		            //    );
+		            //}
+		        // };
+		        
+                $.prototype.zig.handleMouseDown = function (event) {
+                    if (event.which != 1) {
+                        return;
+                    } else if (event.target.nodeType == 1 && event.target.getAttribute("class") == "zig-scrollbar-scroller") {
+                        var instance = $(event.target).data("backref.zig");
+
+                        instance.isScrolling = true;
+                        instance.scrollStartX = event.pageX;
+
+                        /* Prevent the default drag operation. */
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                };               
+
+                $.prototype.zig.handleMouseUp = function (event) {
+                    if (event.which != 1) {
+                        return;
+                    } else if (event.target.nodeType == 1 && event.target.getAttribute("class") == "zig-scrollbar-scroller") {
+                        var instance = $(event.target).data("backref.zig");
+
+                        instance.isScrolling = false;
+
+                        /* Constrain and save scroller position. */
+                        instance.scrollPosition = Math.min(instance.scrollMax,
+                            Math.max(0, instance.scrollPosition - instance.lastScrollDiff)
+                        );
+                    } else {
+                        var mark = $(event.target).closest("." + $.zig.constants.MAGIC);
+                        if (mark.size()) {
+                            var instance = mark.data("plugin.zig");
+                            if (instance.isModeGraphStats && $(event.target).is("samp")) {
+                                var that = $(event.target).closest("span");
+                                if (!that.data("selected.zig")) {
+                                    var oldId = instance.highlightSet[0],
+                                        newId = that.data("id.zig");
+                                    
+                                    var opacityMap = {};
+                                    opacityMap[newId] = 1;
+                                    
+                                    instance.highlightSet = [newId];
+                                    instance.opacityMap = opacityMap;
+
+                                    /* Update legend selection. */                                                                        
+                                    that
+                                        .data("selected.zig", true).css({opacity: 1, cursor: "default"})
+                                        .find("samp:first")
+                                            .css("background-color", instance.config[newId].lineColor)
+                                    .end().siblings()
+                                        .data("selected.zig", false).css({opacity: 0.2, cursor: "pointer"})
+                                        .find("samp:even")
+                                            .css("background-color", "transparent");
+                                    
+                                    /* Update graph opacity. */
+                                    instance.graphContainer[oldId].css("visibility", "hidden");
+                                    instance.graphContainer[newId].css("visibility", "visible");
+                                    
+                                    /*
+                                     * Synchronize.
+                                     */
+                                    var counter = instance.synchronizedTo.length, context;
+                                    while (counter--) {
+                                        // TODO: optimize?
+                                        context = instance.synchronizedTo[counter];
+                                        
+                                        context.highlightSet = [newId]; 
+                                        
+                                        context.renderStatisticsOverlays(newId);
+                                   
+                                        context.graphContainer[oldId].css("visibility", "hidden");    
+                                        context.graphContainer[newId].css({opacity: 1, visibility: "visible"});
+                                    }
+
+                                    instance.renderStatisticsOverlays(newId);
+                                }
+                            } else if (instance.isModeGraphStats && $(event.target).is("abbr")) {
+                                instance.legend.remove();
+                                instance.$node.find(".zig-vertical-grid").css("display", "block");
+                                
+                                instance.overlayRange.remove();
+                                instance.overlayStdDev.remove();
+                                instance.overlayMean.remove();
+                                
+                                // TODO: optimize this
+                                instance.overlayRange = null;
+                                instance.overlayStdDev = null;
+                                instance.overlayMean = null;
+                                
+                                instance.isModeGraphStats = false;
+                                
+                                instance.highlightSet = [];
+                                
+                                // TODO: refactor into public method
+                                var containers = instance.graphContainer, ids = instance.graphIds,
+                                    counter = instance.graphCount;
+                                while (counter--) {
+                                    containers[ids[counter]].css("visibility", "visible");
+                                }
+                                
+                                var counter = instance.synchronizedTo.length, context;
+                                while (counter--) {
+                                    context = instance.synchronizedTo[counter];
+                                    
+                                    context.legend.remove();
+                                    context.isModeGraphStats = false;
+                                    
+                                    context.$node.find(".zig-vertical-grid").css("display", "block");
+                                    
+                                    context.overlayRange.remove();
+                                    context.overlayStdDev.remove();
+                                    context.overlayMean.remove();
+                                    
+                                    // TODO: optimize this
+                                    context.overlayRange = null;
+                                    context.overlayStdDev = null;
+                                    context.overlayMean = null;
+                                    
+                                    context.highlightSet = [];
+                                    
+                                    // TODO: refactor into public method
+                                    var containers = context.graphContainer, ids = context.graphIds,
+                                        graphs = context.graphCount;
+                                    while (graphs--) {
+                                        containers[ids[graphs]].css("visibility", "visible");
+                                    }
+                                } 
+                            } else if (instance.isOnPath) {
+                                instance.isModeGraphStats = true;
+                                
+                                // TODO: refactor into public method
+                                instance.$node.find(".zig-vertical-grid").css("display", "none");
+                                
+                                var id = instance.highlightSet[0]; 
+                                
+                                instance.renderChartLegend(instance); 
+                                instance.renderStatisticsOverlays(id);
+                                
+                                var counter = instance.synchronizedTo.length, context;
+                                while (counter--) {
+                                    context = instance.synchronizedTo[counter];
+                                
+                                    context.isModeGraphStats = true;
+                                    
+                                    // TODO: refactor into public method
+                                    context.$node.find(".zig-vertical-grid").css("display", "none");
+                                    
+                                    context.highlightSet = [id];
+                                    
+                                    context.renderChartLegend();
+                                    context.renderStatisticsOverlays(id);
+                                }
+                            }
+                        }
+                    }
+                };
             }
+
 
             /*
              * Set explicit id on this node.
              */
-            if (!base.id) {
-                base.id = "zig-id-" + $.prototype.zig.counter;
+            if (!self.id) {
+                self.id = "zig-id-" + $.prototype.zig.counter;
                 $.prototype.zig.counter += 1;
-                base.$node.attr("id", base.id);
+                self.$node.attr("id", self.id);
             }
 
             /* Overload with default options. */
-            base.options = $.extend({}, $.zig.defaultOptions, options);
+            self.options = $.extend({}, $.zig.defaultOptions, options);
 
             /*
              * Determine the actual render path.
              */
-            if ($.prototype.zig.supportsCanvas && base.options.defaultRenderPath == "auto") {
+            if ($.prototype.zig.supportsCanvas && self.options.defaultRenderPath == "auto") {
                 _functorRenderSamples = _renderSamplesCanvas;
 
                 /* Additional state for this render path. */
-                base.canvasSegmentContexts = {};
-                base.canvasSegmentWidths = {};
+                self.canvasSegmentContexts = {};
+                self.canvasSegmentWidths = {};
             } else {
                 _functorRenderSamples = _renderSamplesHtml;
 
                 /* Additional state for this render path. */
-                base.lastElementAdded = {};
-                base.lastElementWidth = {};
-                base.lastElementZIndex = {};
+                self.lastElementAdded = {};
+                self.lastElementWidth = {};
+                self.lastElementZIndex = {};
             }
 
             /* Diagram width must be a multiple of DEFAULT_COLUMN_WIDTH. */
-            if ((base.options.sampleRenderWidth | 0) < $.zig.constants.DEFAULT_COLUMN_WIDTH) {
-                base.options.sampleRenderWidth = $.zig.constants.DEFAULT_COLUMN_WIDTH;
+            if ((self.options.sampleRenderWidth | 0) < $.zig.constants.DEFAULT_COLUMN_WIDTH) {
+                self.options.sampleRenderWidth = $.zig.constants.DEFAULT_COLUMN_WIDTH;
             }
 
-            var columnWidth = base.options.sampleRenderWidth;
-            base.options.width = Math.floor(base.options.width / columnWidth) * columnWidth;
+            var columnWidth = self.options.sampleRenderWidth;
+            self.options.width = Math.floor(self.options.width / columnWidth) * columnWidth;
 
             /* Maximum number of samples that fit within the visible canvas. */
-            base.maxSamples = base.options.width / columnWidth;
+            self.maxSamples = self.options.width / columnWidth;
 
             /* Extract samples that were initially declared in the node's HTML. */
             var queue = _extractSamples();
@@ -211,35 +402,45 @@
             /* Render basic chrome. */
             var styles = {
                 position: "relative"
-              , width: base.options.width + "px"
-              , height: base.options.height + "px"
-              , border: "1px solid " + ((base.options.borderColor == "transparent") ?
-                    base.options.backgroundColor : base.options.borderColor)
+              , width: self.options.width + "px"
+              , height: self.options.height + "px"
+              , border: "1px solid " + ((self.options.borderColor == "transparent") ?
+                    self.options.backgroundColor : self.options.borderColor)
               , overflow: "hidden"
             };
-            if ($.browser.msie || $.browser.opera) {
+            if ($.browser.msie) {
+                if (self.options.msieNoneCursorUrl) {
+                    styles.cursor = "url(" + self.options.msieNoneCursorUrl + ")";
+                } else {
+                    styles.cursor = "crosshair";
+                }
+                self.useCustomCursor = false;
+            } else if ($.browser.opera) {
                 styles.cursor = "crosshair";
-                base.useCustomCursor = false;
+                self.useCustomCursor = false;
             } else {
                 styles.cursor = "none";
             }
-            base.$node.css(styles);
+            self.$node.css(styles);
+            
+            /* Mark this node as being zigged. */
+            self.$node.addClass($.zig.constants.MAGIC);
 
             /* Initialize and render graph containers as defined in init parameters. */
             _createGraphs();
 
             /* True if any graph has a fill color set. */
-            base.hasFilledPaths = base.config[base.defaultGraph].fillColor != "none";
+            self.hasFilledPaths = self.config[self.defaultGraph].fillColor != "none";
 
             /*
              * Render more chrome.
              */
             _renderBackground();
             _renderCeilingText();
-            base.options.showVerticalGrid && _renderVerticalGrid();
+            self.options.showVerticalGrid && _renderVerticalGrid();
 
             /* Set up cursor controls. */
-            if (!base.options.debug) {
+            if (!self.options.debug) {
                 _renderCursorControls(true);
                 _wireMouseControls();
             }
@@ -247,75 +448,75 @@
             /* Add samples that were initially declared in the node's HTML. */
             if ($.isArray(queue[0]) && queue[0].length
                     || $.isPlainObject(queue[0]) && !$.isEmptyObject(queue[0])) {
-                base.addSamples(queue[0], queue[1]);                
+                self.addSamples(queue[0], queue[1]);                
             }
         };
 
 
         /**
-         * Initialize and render graph containers as defined in init parameters..
+         * Initialize and render graph containers as defined in init parameters.
          */
         function _createGraphs() {
-            if (!(base.options.graphs && base.options.graphs.length)) {
-                base.graphIds.push("default");
+            if (!(self.options.graphs && self.options.graphs.length)) {
+                self.graphIds.push("default");
 
-                base.planeIndex["default"] = 0;
-                base.rawSamples["default"] = [];
-                base.scaledSamples["default"] = [];
+                self.planeIndex["default"] = 0;
+                self.rawSamples["default"] = [];
+                self.scaledSamples["default"] = [];
 
                 if (!$.prototype.zig.supportsCanvas) {
-                    base.lastElementAdded["default"] = null;
-                    base.lastElementWidth["default"] = null;
-                    base.lastElementZIndex["default"] = null;
+                    self.lastElementAdded["default"] = null;
+                    self.lastElementWidth["default"] = null;
+                    self.lastElementZIndex["default"] = null;
                 }
 
                 var colors = $.zig.constants.DEFAULT_COLORS[0];
-                base.config["default"] = {
+                self.config["default"] = {
                     lineColor: colors.lineColor
                   , fillColor: colors.fillColor
                 };
-                base.defaultColorCounter += 1;
+                self.defaultColorCounter += 1;
 
                 _addGraphContainer("default");
 
-                base.graphCount = 1;
-                base.defaultGraph = "default";
+                self.graphCount = 1;
+                self.defaultGraph = "default";
             } else {
                 var count = 0;
-                $.each(base.options.graphs, function (index, value) {
+                $.each(self.options.graphs, function (index, value) {
                     var id = value.id;
-                    base.graphIds.push(id);
+                    self.graphIds.push(id);
 
-                    base.planeIndex[id] = count;
-                    base.rawSamples[id] = [];
-                    base.scaledSamples[id] = [];
+                    self.planeIndex[id] = count;
+                    self.rawSamples[id] = [];
+                    self.scaledSamples[id] = [];
 
-                    base.config[id] = $.extend({}, value);
+                    self.config[id] = $.extend({}, value);
 
-                    if (!("lineColor" in base.config[id]) && !("fillColor" in base.config[id])) {
-                        $.extend(base.config[id], $.zig.constants.DEFAULT_COLORS[base.defaultColorCounter]);
-                        base.defaultColorCounter += 1;
-                    } else if ("lineColor" in value && !("fillColor" in base.config[id])) {
-                        base.config[id].lineColor = value.lineColor;
-                        base.config[id].fillColor = "none";
-                    } else if (!("lineColor" in value) && "fillColor" in base.config[id]) {
-                        base.config[id].lineColor = $.zig.constants.DEFAULT_COLORS[base.defaultColorCounter].lineColor;
-                        base.config[id].fillColor = value.fillColor;
-                        base.defaultColorCounter += 1;
+                    if (!("lineColor" in self.config[id]) && !("fillColor" in self.config[id])) {
+                        $.extend(self.config[id], $.zig.constants.DEFAULT_COLORS[self.defaultColorCounter]);
+                        self.defaultColorCounter += 1;
+                    } else if ("lineColor" in value && !("fillColor" in self.config[id])) {
+                        self.config[id].lineColor = value.lineColor;
+                        self.config[id].fillColor = "none";
+                    } else if (!("lineColor" in value) && "fillColor" in self.config[id]) {
+                        self.config[id].lineColor = $.zig.constants.DEFAULT_COLORS[self.defaultColorCounter].lineColor;
+                        self.config[id].fillColor = value.fillColor;
+                        self.defaultColorCounter += 1;
                     }
 
                     if (!$.prototype.zig.supportsCanvas) {
-                        base.lastElementAdded[id] = null;
-                        base.lastElementWidth[id] = null;
-                        base.lastElementZIndex[id] = null;
+                        self.lastElementAdded[id] = null;
+                        self.lastElementWidth[id] = null;
+                        self.lastElementZIndex[id] = null;
                     }
 
                     count++;
 
                     _addGraphContainer(id);
                 });
-                base.graphCount = count;
-                base.defaultGraph = base.graphIds[0];
+                self.graphCount = count;
+                self.defaultGraph = self.graphIds[0];
             }
         }
 
@@ -325,31 +526,38 @@
          */
         function _extractSamples() {
             var queuedSamples, queuedLabels;
-            if (base.$node.find("ol li").size()) {
-                if (base.$node.find("ol").size()) {
+            if (self.$node.find("ol li").size()) {
+                if (self.$node.find("ol").size()) {
                     queuedSamples = {}, queuedLabels = {};
-                    base.$node.find("ol").each(function () {
+                    self.$node.find("ol").each(function () {
                         var id = $(this).attr("id");
                         if (!!id) {
                             queuedSamples[id] = [], queuedLabels[id] = [];
                             $(this).find("li").each(function () {
-                                queuedSamples[id].push(parseInt($(this).text()));
+                                queuedSamples[id].push(parseInt($(this).text(), 10));
                                 queuedLabels[id].push($(this).attr("title"));
                             });
                         }
                     });
                 } else {
                     queuedSamples = [], queuedLabels = [];
-                    base.$node.find("li").each(function () {
-                        queuedSamples.push(parseInt($(this).text()));
+                    self.$node.find("li").each(function () {
+                        queuedSamples.push(parseInt($(this).text(), 10));
                         queuedLabels.push($(this).attr("title"));
                     });
                 }
 
-                var currentElement = base.$node, currentClass = currentElement.attr("class");
-                base.$node = base.$node.wrap($("<q>", {css: {display: base.$node.css("display")}})).closest("q");
-                base.$node.attr("class", currentClass);
-                currentElement.css("display", "none");
+                var currentElement = self.$node, currentClass = currentElement.attr("class");
+                self.$node = self.$node.wrap($("<q>", {
+                    css: {
+                        display: self.$node.css("display")
+                    }
+                  , data: {
+                        "plugin.zig": self    
+                    }
+                })).closest("q");
+                self.$node.attr("class", currentClass);
+                currentElement.css("display", "none").removeData("plugin.zig");
             }
             
             return [queuedSamples, queuedLabels];
@@ -360,13 +568,13 @@
          * Set up cursor controls.
          */
         function _wireMouseControls() {
-            base.$node.bind({
+            self.$node.bind({
                 "mousemove.zig": _handleMouseMove
               , "mouseover.zig": _handleMouseOver
-              , "mouseout.zig":  _handleMouseOut
+              , "mouseleave.zig":  _handleMouseLeave
             });
 
-            var handle, element = base.$node.get(0);
+            var handle, element = self.$node.get(0);
             if ($.browser.mozilla && parseFloat($.browser.version.substr(0, 3)) * 10 >= 19) {
                 handle = "DOMMouseScroll";
             }
@@ -384,13 +592,13 @@
          * Add a single graph container using either render path.
          */
         function _addGraphContainer(id) {
-            base.graphContainer[id] = $("<ul>", {
+            self.graphContainer[id] = $("<ul>", {
                 css: {
                     listStyle: "none"
-                  , zIndex: 1000 + base.planeIndex[id]
+                  , zIndex: 1000 + self.planeIndex[id]
                   , position: "absolute"
                 }
-            }).appendTo(base.$node);
+            }).appendTo(self.$node);
         }
 
 
@@ -403,7 +611,7 @@
                     display: "inline-block"
                   , position: "relative"
                 }
-            }).appendTo(base.graphContainer[id]);
+            }).appendTo(self.graphContainer[id]);
 
             var canvasElement = $("<canvas>").appendTo(canvasSegment)
                 .attr({
@@ -416,13 +624,13 @@
 
             if ($.prototype.zig.supportsPixelRetrieval) {
                 var context = canvasElement.get(0).getContext("2d");
-                base.canvasSegmentContexts[id]
-                    && base.canvasSegmentContexts[id].push(context)
-                    || (base.canvasSegmentContexts[id] = [context]);
+                self.canvasSegmentContexts[id]
+                    && self.canvasSegmentContexts[id].push(context)
+                    || (self.canvasSegmentContexts[id] = [context]);
 
-                base.canvasSegmentWidths[id]
-                    && base.canvasSegmentWidths[id].push(width)
-                    || (base.canvasSegmentWidths[id] = [width]);
+                self.canvasSegmentWidths[id]
+                    && self.canvasSegmentWidths[id].push(width)
+                    || (self.canvasSegmentWidths[id] = [width]);
             }
 
             return canvasElement;
@@ -436,11 +644,11 @@
             /* Basic parameters. */
             var count = samples.length,
                 height = _getInnerHeight(),
-                lineColor = base.config[id].lineColor,
-                fillColor = base.config[id].fillColor;
+                lineColor = self.config[id].lineColor,
+                fillColor = self.config[id].fillColor;
 
             /* Create new segment. */
-            var canvasElement = _appendCanvasSegment(id, count * base.options.sampleRenderWidth, height),
+            var canvasElement = _appendCanvasSegment(id, count * self.options.sampleRenderWidth, height),
                 context = canvasElement.get(0).getContext("2d");
 
             /* Define styles. */
@@ -461,7 +669,7 @@
                 context.fillStyle = fillColor;
 
                 /* Modify opacity only for foreground planes. */
-                if (base.planeIndex[id]) {
+                if (self.planeIndex[id]) {
                     context.globalAlpha = 0.8;
                 }
 
@@ -469,7 +677,7 @@
 
                 _drawPathCanvas(context, samples, height, offset, continueFrom);
 
-                context.lineTo(count * base.options.sampleRenderWidth, height);
+                context.lineTo(count * self.options.sampleRenderWidth, height);
                 context.lineTo(0, height);
                 context.lineTo(0, height - samples[0] + offset);
 
@@ -484,10 +692,11 @@
         function _drawPathCanvas(context, samples, height, offset, continueFrom) {
             context.moveTo(0, height - continueFrom);
 
-            var columnWidth = base.options.sampleRenderWidth,
+            var columnWidth = self.options.sampleRenderWidth,
                 s = 0, length = samples.length;
             do {
                 /* Might trigger https://bugzilla.mozilla.org/show_bug.cgi?id=564332 */
+               // TODO: convert numbers to integers using [bitwise-or] 0
                 context.lineTo(s * columnWidth + columnWidth, height - samples[s] + offset);
             } while (++s < length);
         }
@@ -497,7 +706,7 @@
          * Render samples to the given pure HTML DOM graph.
          */
         function _renderSamplesHtml(id, samples, continueFrom, startIndex) {
-            if (base.config[id].fillColor != "none") {
+            if (self.config[id].fillColor != "none") {
                 _drawFilledPathHtml(id, samples, continueFrom, startIndex);
             } else {
                 _drawOutlinedPathHtml(id, samples, continueFrom, startIndex);
@@ -510,12 +719,12 @@
          */
         function _drawFilledPathHtml(id, samples, continueFrom, startIndex) {
             var height = _getInnerHeight(),
-                borderCss = "1px solid " + base.config[id].lineColor,
-                backgroundColor = base.config[id].fillColor,
-                widthBase = base.options.sampleRenderWidth, widthCurrent,
-                widthPreceding = base.lastElementWidth[id],
+                borderCss = "1px solid " + self.config[id].lineColor,
+                backgroundColor = self.config[id].fillColor,
+                widthBase = self.options.sampleRenderWidth, widthCurrent,
+                widthPreceding = self.lastElementWidth[id],
                 currentValue, precedingValue,
-                zIndexCurrent, zIndexPreceding = base.lastElementZIndex[id],
+                zIndexCurrent, zIndexPreceding = self.lastElementZIndex[id],
                 marginLeft, borderLeft, styles,
                 s = 0, length = samples.length;
             do {
@@ -528,7 +737,7 @@
                     zIndexCurrent = zIndexPreceding, marginLeft = (startIndex + s) * widthBase;
 
                     if (precedingValue < currentValue) {
-                        base.lastElementAdded[id].css({
+                        self.lastElementAdded[id].css({
                             width: (widthPreceding + 2) + "px"
                           , borderRight: "none"
                         });
@@ -540,7 +749,7 @@
                         marginLeft--;
                         zIndexCurrent++;
                     } else {
-                        base.lastElementAdded[id].css({
+                        self.lastElementAdded[id].css({
                             width: (widthPreceding + 1) + "px"
                           , borderRight: "none"
                         });
@@ -549,7 +758,7 @@
                     }
                 } else {
                     widthCurrent--;
-                    zIndexCurrent = 1111 * (base.planeIndex[id] + 1);
+                    zIndexCurrent = 1111 * (self.planeIndex[id] + 1);
                 }
 
                 styles = {
@@ -565,16 +774,16 @@
                     };
                 marginLeft && (styles.marginLeft = marginLeft + "px");
                 borderLeft && (styles.borderLeft = borderCss);
-                base.lastElementAdded[id] = $("<li>", {
+                self.lastElementAdded[id] = $("<li>", {
                     css: styles
-                }).appendTo(base.graphContainer[id]);
+                }).appendTo(self.graphContainer[id]);
 
                 widthPreceding = widthCurrent;
                 zIndexPreceding = zIndexCurrent;
             } while (++s < length);
 
-            base.lastElementWidth[id] = widthPreceding;
-            base.lastElementZIndex[id] = zIndexPreceding;
+            self.lastElementWidth[id] = widthPreceding;
+            self.lastElementZIndex[id] = zIndexPreceding;
         }
 
 
@@ -583,8 +792,8 @@
          */
         function _drawOutlinedPathHtml(id, samples, continueFrom, startIndex) {
             var height = _getInnerHeight() - 1,
-                borderCss = "2px solid " + base.config[id].lineColor,
-                widthBase = base.options.sampleRenderWidth, widthCurrent, widthPreceding,
+                borderCss = "2px solid " + self.config[id].lineColor,
+                widthBase = self.options.sampleRenderWidth, widthCurrent, widthPreceding,
                 currentValue, precedingValue,
                 borderTop, borderBottom, marginTopPreceding,
                 s = 0, length = samples.length;
@@ -599,7 +808,7 @@
                     if (precedingValue < currentValue) {
                         borderTop = "none";
                         borderBottom = borderCss;
-                        widthPreceding = base.lastElementWidth[id] - 1;
+                        widthPreceding = self.lastElementWidth[id] - 1;
                         marginTopPreceding = currentValue;
                     } else {
                         borderTop = borderCss;
@@ -608,7 +817,7 @@
                         marginTopPreceding = precedingValue;
                     }
 
-                    base.lastElementAdded[id].css({
+                    self.lastElementAdded[id].css({
                         borderTop: borderTop
                       , borderRight: borderCss
                       , borderBottom: borderBottom
@@ -618,7 +827,7 @@
                     });
                 }
 
-                base.lastElementAdded[id] = $("<li>", {
+                self.lastElementAdded[id] = $("<li>", {
                     css: {
                          display: "inline-block"
                        , position: "absolute"
@@ -627,9 +836,9 @@
                        , borderTop: borderCss
                        , width: widthCurrent + "px"
                     }
-                }).appendTo(base.graphContainer[id]);
+                }).appendTo(self.graphContainer[id]);
 
-                base.lastElementWidth[id] = widthCurrent;
+                self.lastElementWidth[id] = widthCurrent;
             } while (++s < length);
         }
 
@@ -639,7 +848,7 @@
          */
         function _renderBackground() {
             var needsBackground = true;
-            if (base.options.canvasFillStyle == "gradient") {
+            if (self.options.canvasFillStyle == "gradient") {
                 var template = null, property;
 
                 if ($.browser.mozilla && $.browser.version.substr(0, 5).replace(/\./g, "") >= 192) {
@@ -655,12 +864,12 @@
 
                 if (template != null) {
                     needsBackground = false;
-                    base.$node.css(property, _replaceTags(template, {
-                            start: base.options.canvasGradientStart, stop: base.options.canvasGradientStop
+                    self.$node.css(property, _replaceTags(template, {
+                            start: self.options.canvasGradientStart, stop: self.options.canvasGradientStop
                         }));
                 }
             }
-            needsBackground && base.$node.css("background-color", base.options.canvasColor);
+            needsBackground && self.$node.css("background-color", self.options.canvasColor);
         }
 
 
@@ -668,13 +877,13 @@
          * Render the ceiling text element.
          */
         function _renderCeilingText() {
-            base.ceilingText = $("<span>", {
+            self.ceilingText = $("<span>", {
                 css: {
                     position: "absolute"
                   , left: "2px"
                   , top: "2px"
                   , font: $.zig.constants.FONT
-                  , color: base.options.scaleColor
+                  , color: self.options.scaleColor
                   , zIndex: 19000
                   , "-moz-user-select": "-moz-none"
                   , "-webkit-user-select": "none"
@@ -682,7 +891,7 @@
                   , "user-select": "none"
                 }
               , unselectable: "on"
-            }).appendTo(base.$node);
+            }).appendTo(self.$node);
         }
 
 
@@ -690,11 +899,11 @@
          * Render the cursor elements (and coordinate readings if specified).
          */
         function _renderCursorControls(invisible) {
-            if (base.useCustomCursor) {
+            if (self.useCustomCursor) {
                 _renderCrosshairCursor(invisible, false);
             }
 
-            base.options.showCoordinates && _renderCoordinates(invisible);
+            self.options.showCoordinates && _renderCoordinates(invisible);
         }
 
 
@@ -703,16 +912,16 @@
          */
         function _renderVerticalGrid() {
             /* Correct invalid grid count. */
-            if ((base.options.verticalGridSegments | 0) < $.zig.constants.DEFAULT_GRID_SEGMENTS) {
-                base.options.verticalGridSegments = 2;
+            if ((self.options.verticalGridSegments | 0) < $.zig.constants.DEFAULT_GRID_SEGMENTS) {
+                self.options.verticalGridSegments = 2;
             }
 
-            base.$node.find(".zig-vertical-grid").remove();
+            self.$node.find(".zig-vertical-grid").remove();
 
             var height = _getInnerHeight(),
-                style = base.options.verticalGridLineStyle,
-                opacity = base.options.verticalGridOpacity,
-                segments = base.options.verticalGridSegments,
+                style = self.options.verticalGridLineStyle,
+                opacity = self.options.verticalGridOpacity,
+                segments = self.options.verticalGridSegments,
                 even = segments % 2 == 0;
 
             if (even) {
@@ -720,13 +929,13 @@
                     "class": "zig-vertical-grid"
                   , css: {
                         position: "absolute"
-                      , width: base.options.width + "px"
+                      , width: self.options.width + "px"
                       , height: Math.round(height / 2) + "px"
                       , borderBottom: style
                       , opacity: opacity
                       , zIndex: 19000
                     }
-                }).appendTo(base.$node);
+                }).appendTo(self.$node);
             }
 
             var tiles = even ? segments / 2 - 1 : Math.floor(segments / 2),
@@ -736,7 +945,7 @@
                     "class": "zig-vertical-grid"
                   , css: {
                         position: "absolute"
-                      , width: base.options.width + "px"
+                      , width: self.options.width + "px"
                       , height: (Math.floor(height * (even ? segments - (g + 1) * 2 : g * 2 + 1) / segments) - 1) + "px"
                       , marginTop: Math.round(height * (even ? g + 1 : tiles - g) / segments) + "px"
                       , borderTop: style
@@ -744,7 +953,7 @@
                       , opacity: opacity
                       , zIndex: 19000
                     }
-                }).appendTo(base.$node);
+                }).appendTo(self.$node);
             }
         }
 
@@ -753,8 +962,8 @@
          * Render a crosshair cursor.
          */
         function _renderCrosshairCursor(invisible, syncOnly) {
-            if (base.cursors != null) {
-                base.cursors.remove();
+            if (self.cursors != null) {
+                self.cursors.remove();
             }
 
             var commonStyles = {
@@ -767,25 +976,25 @@
             
             var borderStyle = !!syncOnly ? "dashed" : "solid";
 
-            base.horizontalCrosshairCursor = $("<div>", {
+            self.horizontalCrosshairCursor = $("<div>", {
                 css: $.extend({
                     width: 0
                   , height: _getInnerHeight() + "px"
-                  , borderRight: "1px " + borderStyle + " " + base.options.crosshairColor
+                  , borderRight: "1px " + borderStyle + " " + self.options.crosshairColor
                 }, commonStyles)
-            }).appendTo(base.$node);
+            }).appendTo(self.$node);
 
             if (!syncOnly) {
-                base.verticalCrosshairCursor = $("<div>", {
+                self.verticalCrosshairCursor = $("<div>", {
                     css: $.extend({
-                        width: base.options.width + "px"
+                        width: self.options.width + "px"
                       , height: 0
-                      , borderBottom: "1px " + borderStyle + " " + base.options.crosshairColor
+                      , borderBottom: "1px " + borderStyle + " " + self.options.crosshairColor
                     }, commonStyles)
-                }).appendTo(base.$node);
+                }).appendTo(self.$node);
             }
 
-            base.cursors = base.horizontalCrosshairCursor.add(base.verticalCrosshairCursor);
+            self.cursors = self.horizontalCrosshairCursor.add(self.verticalCrosshairCursor);
         }
 
 
@@ -793,15 +1002,15 @@
          * Render coordinate readings.
          */
         function _renderCoordinates(invisible) {
-            if (base.coordinates != null) {
-                base.coordinates.remove();
+            if (self.coordinates != null) {
+                self.coordinates.remove();
             }
 
             var commonStyles = {
                 position: "absolute"
               , zIndex: 20000
               , font: $.zig.constants.FONT
-              , color: base.options.coordinatesColor
+              , color: self.options.coordinatesColor
               , lineHeight: $.zig.constants.TEXT_LINE_HEIGHT + "px"
               , "-moz-user-select": "-moz-none"
               , "-webkit-user-select": "none"
@@ -812,29 +1021,29 @@
                 commonStyles.display = "none";
             }
 
-            base.positionIndex = $("<div>", {
+            self.positionIndex = $("<div>", {
                 css: $.extend({
                     marginTop: (_getInnerHeight() - $.zig.constants.TEXT_LINE_HEIGHT - 2) + "px"
                 }, commonStyles)
               , unselectable: "on"
-            }).appendTo(base.$node);
+            }).appendTo(self.$node);
 
-            base.positionReadings = $("<div>", {
+            self.positionReadings = $("<div>", {
                 css: $.extend({
                     marginTop: (_getInnerHeight() - $.zig.constants.TEXT_LINE_HEIGHT - 2) + "px"
                 }, commonStyles)
               , unselectable: "on"
-            }).appendTo(base.$node);
+            }).appendTo(self.$node);
 
-            base.positionValue = $("<div>", {
+            self.positionValue = $("<div>", {
                 css: $.extend({
                     textAlign: "right"
-                  , width: base.options.width + "px"
+                  , width: self.options.width + "px"
                 }, commonStyles)
               , unselectable: "on"
-            }).appendTo(base.$node);
+            }).appendTo(self.$node);
 
-            base.coordinates = base.positionIndex.add(base.positionReadings).add(base.positionValue);
+            self.coordinates = self.positionIndex.add(self.positionReadings).add(self.positionValue);
         }
 
 
@@ -843,15 +1052,15 @@
          */
         function _updateCoordinate(value, axis) {
             if (axis == "vertical") {
-                if (base.isOnPath) {
+                if (self.isOnPath && !self.isModeGraphStats) {
                     return;
                 }
 
                 var height = _getInnerHeight(),
                     top = value,
-                    displayValue = Math.round((height - value) / height * base.maxCeiling);
+                    displayValue = Math.round((height - value) / height * self.maxCeiling);
 
-                if (base.maxCeiling / base.options.height > 2) {
+                if (self.maxCeiling / self.options.height > 2) {
                     displayValue = Math.round(displayValue / 10) * 10;
                 }
 
@@ -859,21 +1068,21 @@
                     top -= $.zig.constants.TEXT_LINE_HEIGHT;
                 }
 
-                base.positionValue
+                self.positionValue
                     .css({
                         display: "block"
                       , marginTop: top + "px"
                     })
-                    .text(displayValue + " " + base.options.unit);
+                    .text(displayValue + " " + self.options.unit);
             } else {
                 /* Needed for mouse pans. */
-                base.lastHorizontalX = value;
+                self.lastHorizontalX = value;
 
-                var currentOrientation = value < Math.ceil(base.options.width * 0.5),
+                var currentOrientation = value < Math.ceil(self.options.width * 0.5),
                     styles = {};
 
-                if (currentOrientation != base.horizontalOrientation) {
-                    base.horizontalOrientation = currentOrientation;
+                if (currentOrientation != self.horizontalOrientation) {
+                    self.horizontalOrientation = currentOrientation;
 
                     styles.textAlign = currentOrientation ? "left" : "right";
                     if (!currentOrientation) {
@@ -882,7 +1091,7 @@
                 }
                 if (currentOrientation) {
                     styles.marginLeft = (value + 4) + "px";
-                    styles.width = (base.options.width - value - 4) + "px";
+                    styles.width = (self.options.width - value - 4) + "px";
                 } else {
                     styles.width = (value - 2) + "px";
                 }
@@ -890,28 +1099,28 @@
                 /*
                  * Render label if set, otherwise render the sample's index.
                  */
-                var sample = Math.floor((value + base.scrollPosition) / base.options.sampleRenderWidth);
-                base.positionIndex.text(
-                    !!base.sampleLabels[sample] ? base.sampleLabels[sample] : sample + 1
+                var sample = Math.floor((value + self.scrollPosition) / self.options.sampleRenderWidth);
+                self.positionIndex.text(
+                    !!self.sampleLabels[sample] ? self.sampleLabels[sample] : sample + 1
                 );
 
                 /*
                  * Update sample index and sample readings styles.
                  */
-                if (!base.isOnPath) {
+                if (!self.isOnPath) {
                     styles.display = "none";
-                    base.positionReadings.css(styles);
+                    self.positionReadings.css(styles);
 
                     styles.display = "block";
-                    base.positionIndex.css(styles);                    
+                    self.positionIndex.css(styles);                    
                 } else {
-                    base.ceilingText.css("opacity", (value < Math.ceil(base.options.width * 0.25)) ? 0.2 : 1);
+                    self.ceilingText.css("opacity", (value < self.ceilingText.outerWidth()) ? 0.2 : 1);
 
                     styles.display = "block";
-                    base.positionReadings.css(styles);
+                    self.positionReadings.css(styles);
 
                     styles.marginTop = "2px";
-                    base.positionIndex.css(styles);
+                    self.positionIndex.css(styles);
                 }
             }
         }
@@ -923,53 +1132,53 @@
         function _renderScrollbar() {
             var trackStyle = {
                 position: "absolute"
-              , height: base.options.scrollbarHeight + "px"
+              , height: self.options.scrollbarHeight + "px"
               , backgroundColor: "#fff"
               , padding: "1px"
               , cursor: "pointer"
             };
 
-            if (base.options.borderColor == "transparent") {
-                base.scrollbarBorderTransparent = true;
-                base.maxScrollerWidth = base.options.width;
+            if (self.options.borderColor == "transparent") {
+                self.scrollbarBorderTransparent = true;
+                self.maxScrollerWidth = self.options.width;
 
                 $.extend(trackStyle, {
-                    width: base.options.width + "px"
+                    width: self.options.width + "px"
                   , paddingLeft: "0"
-                  , marginTop: (base.options.height - base.options.scrollbarHeight + 2
+                  , marginTop: (self.options.height - self.options.scrollbarHeight + 2
                                     - $.zig.constants.SCROLLBAR_HEIGHT_BASE) + "px"
                   , padding: "1px 1px 0 1px"
                 });
             } else {
-                base.scrollbarBorderTransparent = false;
-                base.maxScrollerWidth = base.options.width - 2;
+                self.scrollbarBorderTransparent = false;
+                self.maxScrollerWidth = self.options.width - 2;
 
                 $.extend(trackStyle, {
-                    width: (base.options.width - 2) + "px"
-                  , marginTop: (base.options.height - base.options.scrollbarHeight
+                    width: (self.options.width - 2) + "px"
+                  , marginTop: (self.options.height - self.options.scrollbarHeight
                                     - $.zig.constants.SCROLLBAR_HEIGHT_BASE) + "px"
-                  , borderTop: "1px solid " + base.options.borderColor
-                  , borderRight: "1px solid " + base.options.borderColor
+                  , borderTop: "1px solid " + self.options.borderColor
+                  , borderRight: "1px solid " + self.options.borderColor
                 });
             }
 
-            base.scrollbarTrack = $("<div>", {
+            self.scrollbarTrack = $("<div>", {
                 css: trackStyle
-            }).appendTo(base.$node);
+            }).appendTo(self.$node);
 
-            base.scrollbarScroller = $("<span>", {
+            self.scrollbarScroller = $("<span>", {
                 "class": "zig-scrollbar-scroller"
               , css: {
                     display: "inline-block"
                   , position: "absolute"
-                  , height: base.options.scrollbarHeight + "px"
-                  , backgroundColor: base.options.scrollbarColor
+                  , height: self.options.scrollbarHeight + "px"
+                  , backgroundColor: self.options.scrollbarColor
                   , cursor: "pointer"
                 }
               , data: {
-                  "backref.zig": base
+                  "backref.zig": self
               }
-            }).appendTo(base.scrollbarTrack);
+            }).appendTo(self.scrollbarTrack);
 
             /*
              * Bind mouse down/up events only once for all instances.
@@ -978,34 +1187,9 @@
                 $.prototype.zig.hasMouseEventsBound = true;
 
                 $(document).bind({
-                    "mousedown.zig": function (event) {
-                        if (event.which != 1) {
-                            return;
-                        } else if (event.target.nodeType == 1 && event.target.getAttribute("class") == "zig-scrollbar-scroller") {
-                            var instance = $(event.target).data("backref.zig");
-
-                            instance.isScrolling = true;
-                            instance.scrollStartX = event.pageX;
-
-                            /* Prevent the default drag operation. */
-                            event.preventDefault();
-                            event.stopPropagation();
-                        }
-                    }
-                  , "mouseup.zig": function (event) {
-                        if (event.which != 1) {
-                            return;
-                        } else if (event.target.nodeType == 1 && event.target.getAttribute("class") == "zig-scrollbar-scroller") {
-                            var instance = $(event.target).data("backref.zig");
-
-                            instance.isScrolling = false;
-
-                            /* Constrain and save scroller position. */
-                            instance.scrollPosition = Math.min(instance.scrollMax,
-                                Math.max(0, instance.scrollPosition - instance.lastScrollDiff)
-                            );
-                        }
-                    }
+                    "mousedown.zig": $.prototype.zig.handleMouseDown 
+                  , "mouseup.zig": $.prototype.zig.handleMouseUp
+                  , "mouseout.zig": $.prototype.zig.handleMouseOut
                 });
             }
         }
@@ -1016,8 +1200,8 @@
          */
         function _scrollChartTo(percentage, needsRedraw) {
             /* Update edges of chart to indicate excess content. */
-            if (!base.scrollbarBorderTransparent && base.hasScrollbar) {
-                base.$node.css({
+            if (!self.scrollbarBorderTransparent && self.hasScrollbar) {
+                self.$node.css({
                     borderLeftStyle: (percentage == 0) ? "solid" : "dashed"
                   , borderRightStyle: (percentage == 100) ? "solid" : "dashed"
                 });
@@ -1026,21 +1210,21 @@
             /*
              * Update clipping.
              */
-            var chartWidth = base.sampleCountMax * base.options.sampleRenderWidth,
-                scrollableExcess = chartWidth - base.options.width,
+            var chartWidth = self.sampleCountMax * self.options.sampleRenderWidth,
+                scrollableExcess = chartWidth - self.options.width,
                 scrollPosition = Math.round(scrollableExcess / 100 * percentage),
-                left = base.graphClipOffset + scrollPosition,
+                left = self.graphClipOffset + scrollPosition,
                 styles = {
                     clip: "rect("
                         + "0px"
-                        + " " + (base.options.width + left) + "px"
+                        + " " + (self.options.width + left) + "px"
                         + " " + _getInnerHeight() + "px"
                         + " " + left + "px"
                     + ")"
                   , marginLeft: "-" + left + "px"
                 },
-                containers = base.graphContainer, ids = base.graphIds,
-                counter = base.graphCount;
+                containers = self.graphContainer, ids = self.graphIds,
+                counter = self.graphCount;
             while (counter--) {
                 containers[ids[counter]].css(styles);
             }
@@ -1049,20 +1233,20 @@
              * Redraw track and scroller.
              */
             if (needsRedraw) {
-                base.scrollerWidth = base.options.width / chartWidth * base.maxScrollerWidth;
-                base.scrollRatio = chartWidth / base.options.width;
+                self.scrollerWidth = self.options.width / chartWidth * self.maxScrollerWidth;
+                self.scrollRatio = chartWidth / self.options.width;
 
                 /* Update scroller position and dimensions. */
-                base.scrollbarScroller.css({
-                    width: Math.round(base.scrollerWidth) + "px"
+                self.scrollbarScroller.css({
+                    width: Math.round(self.scrollerWidth) + "px"
                   , marginLeft: _getScrollerPosition(percentage) + "px"
                 });
 
                 /* Indicate max scroll position. */
-                base.scrollMax = scrollableExcess;
+                self.scrollMax = scrollableExcess;
 
                 /* Default scroll position is at the right edge of the chart. */
-                base.scrollPosition = scrollableExcess;
+                self.scrollPosition = scrollableExcess;
             }
         }
 
@@ -1072,27 +1256,27 @@
          */
         function _handleMouseMove(event) {
             /* Needed for on-the-fly switching of cursor type. */
-            base.lastPageX = event.pageX;
-            base.lastPageY = event.pageY;
+            self.lastPageX = event.pageX;
+            self.lastPageY = event.pageY;
 
-            if (base.isScrolling) {
-                var scrollDiff = base.scrollStartX - event.pageX;
+            if (self.isScrolling) {
+                var scrollDiff = self.scrollStartX - event.pageX;
 
                 if (scrollDiff == 0) {
                     return;
                 } else {
-                    base.lastScrollDiff = scrollDiff * base.scrollRatio;
+                    self.lastScrollDiff = scrollDiff * self.scrollRatio;
 
-                    var targetPosition = base.scrollPosition - base.lastScrollDiff;
+                    var targetPosition = self.scrollPosition - self.lastScrollDiff;
 
                     /* Constrain scroller position. */
-                    targetPosition = Math.min(Math.max(0, targetPosition), base.scrollMax);
+                    targetPosition = Math.min(Math.max(0, targetPosition), self.scrollMax);
 
                     /* Determine scroll offset. */
-                    var percentage = targetPosition / base.scrollMax * 100;
+                    var percentage = targetPosition / self.scrollMax * 100;
 
                     /* Update scroller position. */
-                    base.scrollbarScroller.css("margin-left", _getScrollerPosition(percentage) + "px");
+                    self.scrollbarScroller.css("margin-left", _getScrollerPosition(percentage) + "px");
 
                     /* Update canvas scroll position. */
                     _scrollChartTo(percentage, false);
@@ -1100,40 +1284,53 @@
                     /*
                      * Update scroll position in synchronized charts.
                      */
-                    var counter = base.synchronizedTo.length;
+                    var counter = self.synchronizedTo.length;
                     while (counter--) {
-                        base.synchronizedTo[counter].scrollTo(percentage);
+                        self.synchronizedTo[counter].scrollTo(percentage);
                     }
                 }
             } else {
-                var offset = base.$node.offset(),
+                var offset = self.$node.offset(),
                     height = _getInnerHeight(),
                     x = Math.floor(event.pageX - offset.left),
                     y = Math.floor(event.pageY - offset.top);
 
-                if (x >= base.options.width || y >= height) {
-                    _clearGraphTrace();
+                if (x >= self.options.width || y >= height || (self.isModeGraphStats && y < 15)) { // TODO: find exact y threshold
+                    _clearGraphTrace(false);
                 } else {
-                    /* Determine which graphs the cursor is tracing. */
-                    var trace = _traceCursorPosition(x + base.scrollPosition, y);
+                    var index = Math.floor((x + self.scrollPosition) / self.options.sampleRenderWidth);
                     
-                    /* Highlight graphs and render sample readings at the cursor position. */
-                    var index = Math.floor((x + base.scrollPosition) / base.options.sampleRenderWidth);
-                    _highlightGraphs(index, trace.highlightSet, trace.targetOpacity);
+                    // TODO: cleanup
+                    if (!self.isModeGraphStats) {
                     
-                    if (base.useCustomCursor) {
-                        base.horizontalCrosshairCursor.css({
+                        /* Determine which graphs the cursor is tracing. */
+                        var trace = _traceCursorPosition(x + self.scrollPosition, y);
+                        
+                        /* ... */
+                        self.highlightSet = trace.highlightSet.concat();
+                        self.opacityMap = trace.targetOpacity;
+                        
+                        /* Highlight graphs and render sample readings at the cursor position. */
+                        _highlightGraphs(index, trace.highlightSet, trace.targetOpacity);
+                    
+                    } else {
+                        var jgj = self.highlightSet[0];
+                         _highlightGraphs(index, self.highlightSet, {jgj: 1});
+                    }
+                    
+                    if (self.useCustomCursor) {
+                        self.horizontalCrosshairCursor.css({
                             display: "block"
                           , paddingLeft: x + "px"
                         });
 
-                        base.verticalCrosshairCursor.css({
+                        self.verticalCrosshairCursor.css({
                             display: "block"
                           , paddingTop: y + "px"
                         });
                     }
 
-                    if (base.options.showCoordinates) {
+                    if (self.options.showCoordinates) {
                         _updateCoordinate(x, "horizontal");
                         _updateCoordinate(y, "vertical");
                     }
@@ -1141,14 +1338,16 @@
                     /*
                      * Update cursor and highlights in synchronized charts.
                      */
-                    var counter = base.synchronizedTo.length, instance;
+                    // if (!self.isModeGraphStats) {
+                    var counter = self.synchronizedTo.length, instance;
                     while (counter--) {
-                        instance = base.synchronizedTo[counter]; 
+                        instance = self.synchronizedTo[counter]; 
                         instance.moveSyncCursorTo(x).highlightGraphs(
                             Math.floor((x + instance.scrollPosition) / instance.options.sampleRenderWidth), 
-                            trace.highlightSet, trace.targetOpacity
+                            self.highlightSet, self.opacityMap // trace.targetOpacity
                         );
                     }
+                    // }
                 }
             }
         }
@@ -1158,7 +1357,7 @@
          * Update cursor and scrolling via mouse-wheel or trackpad movement.
          */
         function _handleMousePan(event) {
-            if (!base.hasScrollbar) {
+            if (!self.hasScrollbar) {
                 return;
             }
 
@@ -1180,26 +1379,26 @@
             }
 
             if (delta) {
-                var columnWidth = base.options.sampleRenderWidth,
-                    targetPosition = base.scrollPosition + Math.ceil(delta);
+                var columnWidth = self.options.sampleRenderWidth,
+                    targetPosition = self.scrollPosition + Math.ceil(delta);
 
                 /* Constrain scroller position. */
-                targetPosition = Math.min(Math.max(0, targetPosition), base.scrollMax);
+                targetPosition = Math.min(Math.max(0, targetPosition), self.scrollMax);
 
-                base.scrollPosition = targetPosition;
+                self.scrollPosition = targetPosition;
 
-                var x = base.lastHorizontalX,
-                    sample = Math.floor((x - x % columnWidth + base.scrollPosition) / columnWidth);
+                var x = self.lastHorizontalX,
+                    sample = Math.floor((x - x % columnWidth + self.scrollPosition) / columnWidth);
 
-                base.options.showCoordinates && base.positionIndex.text(
-                    !!base.sampleLabels[sample] ? base.sampleLabels[sample] : sample + 1
+                self.options.showCoordinates && self.positionIndex.text(
+                    !!self.sampleLabels[sample] ? self.sampleLabels[sample] : sample + 1
                 );
 
                 /* Determine scroll offset. */
-                var percentage = targetPosition / base.scrollMax * 100;
+                var percentage = targetPosition / self.scrollMax * 100;
 
                 /* Update scroller position. */
-                base.scrollbarScroller.css("margin-left", _getScrollerPosition(percentage) + "px");
+                self.scrollbarScroller.css("margin-left", _getScrollerPosition(percentage) + "px");
 
                 /* Update canvas scroll position. */
                 _scrollChartTo(percentage, false);
@@ -1207,9 +1406,9 @@
                 /*
                  * Synchronize scroll position and sample index reading.
                  */
-                var counter = base.synchronizedTo.length, instance;
+                var counter = self.synchronizedTo.length, instance;
                 while (counter--) {
-                    instance = base.synchronizedTo[counter];
+                    instance = self.synchronizedTo[counter];
 
                     instance.scrollTo(percentage);
                     instance.options.showCoordinates && instance.positionIndex.text(
@@ -1220,18 +1419,18 @@
                 /*
                  * Revert coordinates to defaults.
                  */
-                base.positionValue.css("display", "block");
-                base.positionReadings.css("display", "none");
-                base.ceilingText.css("opacity", 1);                    
+                self.positionValue.css("display", "block");
+                self.positionReadings.css("display", "none");
+                self.ceilingText.css("opacity", 1);                    
                     
-                if (base.isOnPath) {
+                if (self.isOnPath) {
                     /* Clear highlights in this chart. */
                     _highlightGraphs(false);
         
                     /* Clear cursor and highlights in synchronized charts. */
-                    var d = base.synchronizedTo.length;
+                    var d = self.synchronizedTo.length;
                     while (d--) {
-                        base.synchronizedTo[d].highlightGraphs(false);
+                        self.synchronizedTo[d].highlightGraphs(false);
                     } 
                 }
 
@@ -1251,18 +1450,18 @@
          * Handle the mouse entering the chart. 
          */
         function _handleMouseOver(event) {
-            if (!base.hasFocus) {
-                base.hasFocus = true;
+           	if (!self.hasFocus) {
+                self.hasFocus = true;
                 
-                if (!base.isScrolling) {
+                if (!self.isScrolling) {
                 
-                    base.useCustomCursor && base.cursors.css("display", "block");
-	                base.options.showCoordinates && base.coordinates.css("display", "block");
+	                self.useCustomCursor && self.cursors.css("display", "block");
+	                self.options.showCoordinates && self.coordinates.css("display", "block");
 	                
 	                /* ... */
-	                var counter = base.synchronizedTo.length;
+	                var counter = self.synchronizedTo.length;
 	                while (counter--) {
-	                    base.synchronizedTo[counter].enableSyncCursor().obscureVerticalGrid();
+	                    self.synchronizedTo[counter].enableSyncCursor().obscureVerticalGrid();
 	                }
 	            }                
             }
@@ -1272,22 +1471,21 @@
         /**
          * Handle the mouse leaving the chart.
          */
-        function _handleMouseOut(event) {
-            if (!base.isScrolling) {
+        function _handleMouseLeave(event) {
+            if (!self.isScrolling) {
                 /* Check that mouse cursor actually left the canvas. */
-                if (!!event && $(event.relatedTarget).closest("#" + base.id).size()) {
+                /* if (!!event && $(event.relatedTarget).closest("#" + self.id).size()) {
                     return;
-                } else {
-                    base.hasFocus = false;
-                }
-    
+                } */
+    			
+    			self.hasFocus = false;
                 _clearGraphTrace(true);
             } else { // TODO: only if cursor actually left the track
-                base.isScrolling = false;
+                self.isScrolling = false;
 
                 /* Constrain and save scroller position. */
-                base.scrollPosition = Math.min(base.scrollMax,
-                    Math.max(0, base.scrollPosition - base.lastScrollDiff)
+                self.scrollPosition = Math.min(self.scrollMax,
+                    Math.max(0, self.scrollPosition - self.lastScrollDiff)
                 );
             }
         }
@@ -1296,17 +1494,22 @@
         /**
          * Clear the cursor, highlights and coordinates in this chart and synchronized charts.
          */
-        function _clearGraphTrace() {
-            base.useCustomCursor && base.cursors.css("display", "none");
-            base.options.showCoordinates && base.coordinates.css("display", "none");
+        function _clearGraphTrace(fullSync) {
+            self.useCustomCursor && self.cursors.css("display", "none");
+            self.options.showCoordinates && self.coordinates.css("display", "none");
 
             /* Clear highlights in this chart. */
             _highlightGraphs(false);
 
             /* Clear cursor and highlights in synchronized charts. */
-            var d = base.synchronizedTo.length;
+            var d = self.synchronizedTo.length, instance;
             while (d--) {
-                base.synchronizedTo[d].highlightGraphs(false).disableSyncCursor().unobscureVerticalGrid();
+                instance = self.synchronizedTo[d];
+                instance.disableSyncCursor().unobscureVerticalGrid();
+                instance.options.showCoordinates && instance.coordinates.css("display", "none");
+                if (!!fullSync) {
+                    instance.highlightGraphs(false);    
+                }                
             }            
         }
         
@@ -1318,22 +1521,22 @@
             var innerHeight = _getInnerHeight();
 
             /* Check if cursor left the canvas. */
-            if (x >= base.options.width + base.scrollPosition || y >= innerHeight) {
-                base.isOnPath = false;
+            if (x >= self.options.width + self.scrollPosition || y >= innerHeight) {
+                self.isOnPath = false;
                 return;
             }
 
             var absY = innerHeight - y,
-                scaleFactor = base.maxCeiling / innerHeight,
+                scaleFactor = self.maxCeiling / innerHeight,
                 value = absY * scaleFactor,
                 lowerBoundary = (absY - 6) * scaleFactor,
                 upperBoundary = (absY + 6) * scaleFactor,
-                index = Math.floor(x / base.options.sampleRenderWidth),
-                rawSamples = base.rawSamples, samples, current,
-                idSet = base.graphIds, containers = base.graphContainer,
+                index = Math.floor(x / self.options.sampleRenderWidth),
+                rawSamples = self.rawSamples, samples, current,
+                idSet = self.graphIds, containers = self.graphContainer,
                 highlightSet = [], targetOpacity = {}, 
-                length = base.graphCount,
-                supportsPixelRetrieval = base.options.defaultRenderPath == "auto" && $.prototype.zig.supportsPixelRetrieval,
+                length = self.graphCount,
+                supportsPixelRetrieval = self.options.defaultRenderPath == "auto" && $.prototype.zig.supportsPixelRetrieval,
                 id, hit, d = 0;
 
             do {
@@ -1343,22 +1546,22 @@
                 if (!samples || containers[id].css("visibility") == "hidden") continue;
 
                 current = samples[index];
-                if (base.hasFilledPaths) {
+                if (self.hasFilledPaths) {
                     hit = current >= value;
                 } else {
                     hit = (current >= lowerBoundary && current <= upperBoundary
                             || current <= value && samples[index + 1] >= value);
                 }
 
-                if (!hit && supportsPixelRetrieval && id in base.canvasSegmentWidths) {
-                    var segmentWidths = base.canvasSegmentWidths[id], segments = segmentWidths.length, segmentWidth,
-                        contexts = base.canvasSegmentContexts[id],
+                if (!hit && supportsPixelRetrieval && id in self.canvasSegmentWidths) {
+                    var segmentWidths = self.canvasSegmentWidths[id], segments = segmentWidths.length, segmentWidth,
+                        contexts = self.canvasSegmentContexts[id],
                         position = 0, s = -1;
                     while (++s < segments) {
                         segmentWidth = segmentWidths[s];
-                        if (x + base.graphClipOffset < position + segmentWidth) {
+                        if (x + self.graphClipOffset < position + segmentWidth) {
                             /* Correct x-position relative to segment offset and canvas clip-offset. */
-                            var reading = contexts[s].getImageData(x + base.graphClipOffset - (s ? position : 0), y, 1, 1).data;
+                            var reading = contexts[s].getImageData(x + self.graphClipOffset - (s ? position : 0), y, 1, 1).data;
                             hit = reading[0] || reading[1] || reading[2];
                             break;
                         } else {
@@ -1388,40 +1591,42 @@
         function _highlightGraphs(index, highlightSet, targetOpacity) {
             var hasHighlights = !!highlightSet && !!highlightSet.length;
             
-            if (hasHighlights || base.isOnPath) {
-                var restore = !hasHighlights && base.isOnPath,
-                    foremostPlane = -1;
+            if (hasHighlights || self.isOnPath) {
+                var restore = !hasHighlights && self.isOnPath;
                 
-                /* Determine foremost plane index. */
-                if (!restore) {
-                    var graph = highlightSet.length, indices = base.planeIndex;
-                    while (graph--) {
-                        foremostPlane = Math.max(base.planeIndex[highlightSet[graph]], foremostPlane);
-                    }   
-                }
-                
-                var containers = base.graphContainer, ids = base.graphIds,
-                    counter = base.graphCount, id;    
-                while (counter--) {
-                    id = ids[counter];
-
-                    if (restore) {
-                        containers[id].css("opacity", 1);
-                    } else if (base.hasFilledPaths && base.planeIndex[id] < foremostPlane) {
-                        containers[id].css("opacity", 0.2);
-                    } else {
-                        containers[id].css("opacity", targetOpacity[id]);
+                if (!!targetOpacity && !$.isEmptyObject(targetOpacity) || restore) {
+                    /* Determine foremost plane index. */
+                    if (!restore) {
+                        var foremostPlane = -1, 
+                            graph = highlightSet.length, indices = self.planeIndex;
+                        while (graph--) {
+                            foremostPlane = Math.max(self.planeIndex[highlightSet[graph]], foremostPlane);
+                        }   
                     }
+                    
+                    var containers = self.graphContainer, ids = self.graphIds,
+                        counter = self.graphCount, id;    
+                    while (counter--) {
+                        id = ids[counter];
+    
+                        if (restore) {
+                            containers[id].css("opacity", 1);
+                        } else if (self.hasFilledPaths && self.planeIndex[id] < foremostPlane) {
+                            containers[id].css("opacity", 0.2);
+                        } else {
+                            containers[id].css("opacity", targetOpacity[id]);
+                        }
+                     }
                  }
 
-                 if (base.options.showCoordinates && hasHighlights) {
+                 if (self.options.showCoordinates && hasHighlights) {
                     /* Move sample index reading to the top of the chart. */
-                    base.positionIndex.css("margin-top", "2px");
+                    self.positionIndex.css("margin-top", "2px");
                     
-                    base.positionValue.css("display", "none");
-                    base.positionReadings.empty();
-                    if (hasHighlights && !base.isOnPath) {
-                        base.positionReadings.css("display", "block");
+                    self.positionValue.css("display", "none");
+                    self.positionReadings.empty();
+                    if (hasHighlights && !self.isOnPath) {
+                        self.positionReadings.css("display", "block");
                     }
                     
                     /* Re-order according to creation time. */                     
@@ -1431,14 +1636,14 @@
                     var d = highlightSet.length - 1, id;
                     do {
                         id = highlightSet[d];
-                        if (!(id in base.sampleReadings)) {
-                            base.sampleReadings[id] = $("<span>", {
+                        if (!(id in self.sampleReadings)) {
+                            self.sampleReadings[id] = $("<span>", {
                                 css: {
-                                    border: "1px solid " + (base.config[id].highlightBorderColor || base.config[id].lineColor)
+                                    border: "1px solid " + (self.config[id].highlightBorderColor || self.config[id].lineColor)
                                   , borderTopWidth: "3px"
                                   , padding: "2px"
-                                  , color: base.config[id].highlightTextColor || base.options.coordinatesColor
-                                  , backgroundColor: base.config[id].highlightBackgroundColor || base.options.canvasColor
+                                  , color: self.config[id].highlightTextColor || self.options.coordinatesColor
+                                  , backgroundColor: self.config[id].highlightBackgroundColor || self.options.canvasColor
                                   , "-moz-user-select": "-moz-none"
                                   , "-webkit-user-select": "none"
                                   , "-o-user-select": "none"
@@ -1447,27 +1652,27 @@
                               , unselectable: "on"
                             });
                         }
-                        base.sampleReadings[id].text(
-                            base.rawSamples[id][index] + " " + base.options.unit
-                        ).appendTo(base.positionReadings);
+                        self.sampleReadings[id].text(
+                            self.rawSamples[id][index] + " " + self.options.unit
+                        ).appendTo(self.positionReadings);
         
-                       $("<br>").appendTo(base.positionReadings);
+                       $("<br>").appendTo(self.positionReadings);
                     } while (d--);
         
                     var height = $.zig.constants.TEXT_LINE_HEIGHT + 1 + 2 + 2 + 3 + 4;
-                    base.positionReadings.css({
+                    self.positionReadings.css({
                         marginTop: (_getInnerHeight() - height * highlightSet.length) + "px"
                       , lineHeight: height + "px"
                     });                     
                 } else if (restore) {
                     /* Move sample index reading to the bottom of the chart. */
-                    base.positionIndex.css("margin-top", (_getInnerHeight() - $.zig.constants.TEXT_LINE_HEIGHT - 2) + "px");
+                    self.positionIndex.css("margin-top", (_getInnerHeight() - $.zig.constants.TEXT_LINE_HEIGHT - 2) + "px");
 
-                    base.positionReadings.css("display", "none");
-                    base.ceilingText.css("opacity", 1);
+                    self.positionReadings.css("display", "none");
+                    self.ceilingText.css("opacity", 1);
                 }
             }
-            base.isOnPath = hasHighlights;            
+            self.isOnPath = hasHighlights;            
         }
         
         
@@ -1480,13 +1685,13 @@
             if (length == 1) {
                 return graphs;
             } else if (length == 2) {
-                if (base.rawSamples[graphs[0]][index] > base.rawSamples[graphs[1]][index]) {
+                if (self.rawSamples[graphs[0]][index] > self.rawSamples[graphs[1]][index]) {
                     return [graphs[1], graphs[0]];
                 } else {
                     return graphs;
                 }
             } else {
-                var rawSamples = base.rawSamples, 
+                var rawSamples = self.rawSamples, 
                     usedSamples = [], 
                     c = 0;
                 do {
@@ -1516,43 +1721,43 @@
          * Redraw all graphs in the chart and reset scroll state.
          */
         function _redrawChart(rescale) {
-            base.graphClipOffset = 0;
+            self.graphClipOffset = 0;
 
-            var isCanvas = $.prototype.zig.supportsCanvas && base.options.defaultRenderPath == "auto";
+            var isCanvas = $.prototype.zig.supportsCanvas && self.options.defaultRenderPath == "auto";
 
             /* Re-init <canvas> segments. */
             if (isCanvas) {
-                base.canvasSegmentContexts = {};
-                base.canvasSegmentWidths = {};
+                self.canvasSegmentContexts = {};
+                self.canvasSegmentWidths = {};
             }
 
             if (rescale) {
-                var scaleFactor = _getInnerHeight() / base.maxCeiling;
+                var scaleFactor = _getInnerHeight() / self.maxCeiling;
             }
 
-            var counter = base.graphCount, id;
+            var counter = self.graphCount, id;
             while (counter--) {
-                id = base.graphIds[counter];
+                id = self.graphIds[counter];
 
-                if (base.rawSamples[id].length) {
+                if (self.rawSamples[id].length) {
                     if (isCanvas) {
-                        base.graphContainer[id].css({
+                        self.graphContainer[id].css({
                             clip: "auto"
                           , marginLeft: 0
                         });
                     }
-                    base.graphContainer[id].find("li").remove();
+                    self.graphContainer[id].find("li").remove();
 
                     if (rescale) {
-                        base.scaledSamples[id] = [];
-                        var rawSamples = base.rawSamples[id],
+                        self.scaledSamples[id] = [];
+                        var rawSamples = self.rawSamples[id],
                             sampleCount = rawSamples.length, s = 0;
                         do {
-                            base.scaledSamples[id].push(Math.floor(rawSamples[s] * scaleFactor));
+                            self.scaledSamples[id].push(Math.floor(rawSamples[s] * scaleFactor));
                         } while (++s < sampleCount);
                     }
 
-                    _functorRenderSamples(id, base.scaledSamples[id], base.scaledSamples[id][0], 0);
+                    _functorRenderSamples(id, self.scaledSamples[id], self.scaledSamples[id][0], 0);
                 }
             }
         }
@@ -1562,10 +1767,10 @@
          * Return the usable inner height of the chart.
          */
         function _getInnerHeight() {
-            var height = base.options.height;
-            if (base.hasScrollbar) {
-                height -= base.options.scrollbarHeight + $.zig.constants.SCROLLBAR_HEIGHT_BASE;
-                if (base.scrollbarBorderTransparent) {
+            var height = self.options.height;
+            if (self.hasScrollbar) {
+                height -= self.options.scrollbarHeight + $.zig.constants.SCROLLBAR_HEIGHT_BASE;
+                if (self.scrollbarBorderTransparent) {
                     height += 2;
                 }
             }
@@ -1577,7 +1782,7 @@
          * Return the scroller position within the scrollbar track.
          */
         function _getScrollerPosition(percentage) {
-            return Math.round((base.maxScrollerWidth - base.scrollerWidth) * percentage / 100);
+            return Math.round((self.maxScrollerWidth - self.scrollerWidth) * percentage / 100);
         }
 
 
@@ -1598,8 +1803,8 @@
          * Return the maximum number of added samples across all graphs.
          */
         function _getMaxSampleCount() {
-            var samples = [], rawSamples = base.rawSamples, ids = base.graphIds,
-                counter = base.graphCount;
+            var samples = [], rawSamples = self.rawSamples, ids = self.graphIds,
+                counter = self.graphCount;
             while (counter--) {
                 samples.push(rawSamples[ids[counter]].length);
             };
@@ -1624,16 +1829,16 @@
          * Remove scrollbar chrome.
          */
         function _removeScrollbar() {
-            base.hasScrollbar = false;
-            base.scrollbarTrack.remove();
-            if (!base.scrollbarBorderTransparent) {
-                base.$node.css({
+            self.hasScrollbar = false;
+            self.scrollbarTrack.remove();
+            if (!self.scrollbarBorderTransparent) {
+                self.$node.css({
                     borderLeftStyle: "solid"
                   , borderRightStyle: "solid"
                 });
             }
 
-            base.options.showVerticalGrid && _renderVerticalGrid();
+            self.options.showVerticalGrid && _renderVerticalGrid();
 
             _renderCursorControls(true);
         }
@@ -1646,11 +1851,13 @@
             if (!$.isArray(samples)) {
                 samples = [samples];
             }
-            if ($.grep(samples, function (element) { return $.type(element) != "number"; }).length) {
-                throw "Must only add numbers as sample values."
+            // TODO: optimize this
+            if ($.grep(samples, function (element) { return $.type(element) != "number" || element < 0 || parseInt(element, 10) !== element; }).length) {
+                console.log(samples)
+                throw "Must only add positive integer numbers (base 10) as sample values."
             }
 
-            var sampleCount = base.rawSamples[id].length,
+            var sampleCount = self.rawSamples[id].length,
                 addCount = samples.length,
                 continueIndex = sampleCount - 1,
                 needsRedraw = false, hasOverflow = false;
@@ -1658,37 +1865,37 @@
             /*
              * Detect clipping.
              */
-            if (sampleCount + addCount > base.maxSamples) {
-                if (base.options.overflow == "clip") {
-                    if (addCount > base.maxSamples) {
-                        samples = samples.slice(addCount - base.maxSamples);
+            if (sampleCount + addCount > self.maxSamples) {
+                if (self.options.overflow == "clip") {
+                    if (addCount > self.maxSamples) {
+                        samples = samples.slice(addCount - self.maxSamples);
                         addCount = samples.length;
                     }
 
                     if (sampleCount) {
-                        var skip = sampleCount + addCount - base.maxSamples;
+                        var skip = sampleCount + addCount - self.maxSamples;
 
-                        base.graphClipOffset += skip * base.options.sampleRenderWidth;
+                        self.graphClipOffset += skip * self.options.sampleRenderWidth;
 
                         /*
                          * Shave off leading elements across all paths.
                          */
-                        var counter = base.graphCount, graph;
+                        var counter = self.graphCount, graph;
                         while (counter--) {
-                            graph = base.graphIds[counter];
-                            base.rawSamples[graph] = base.rawSamples[graph].slice(skip);
-                            base.scaledSamples[graph] = base.scaledSamples[graph].slice(skip);
+                            graph = self.graphIds[counter];
+                            self.rawSamples[graph] = self.rawSamples[graph].slice(skip);
+                            self.scaledSamples[graph] = self.scaledSamples[graph].slice(skip);
                         }
 
-                        sampleCount = base.rawSamples[id].length;
+                        sampleCount = self.rawSamples[id].length;
 
                         hasOverflow = true;
 
                         continueIndex -= addCount;
                     }
-                } else if (base.options.overflow == "scroll" && !base.hasScrollbar) {
-                    base.hasScrollbar = true;
-                    base.options.showVerticalGrid && _renderVerticalGrid();
+                } else if (self.options.overflow == "scroll" && !self.hasScrollbar) {
+                    self.hasScrollbar = true;
+                    self.options.showVerticalGrid && _renderVerticalGrid();
                     _renderScrollbar();
                     _renderCursorControls(true);
                 }
@@ -1698,22 +1905,22 @@
              * Adjust max ceiling.
              */
             var ceiling = _getCeiling(Math.max.apply(Math, samples));
-            if (ceiling > base.maxCeiling) {
-                base.maxCeiling = ceiling;
+            if (ceiling > self.maxCeiling) {
+                self.maxCeiling = ceiling;
 
-                if (base.options.overflow == "scroll" && (sampleCount + addCount <= base.maxSamples || base.hasScrollbar)) {
+                if (self.options.overflow == "scroll" && (sampleCount + addCount <= self.maxSamples || self.hasScrollbar)) {
                     /* Only rescale now when no overflow occurs. */
                     _redrawChart(true);
-                } else if (base.options.overflow == "clip" && hasOverflow) {
+                } else if (self.options.overflow == "clip" && hasOverflow) {
                     needsRedraw = true;
                 }
             }
 
             /* Update ceiling text in any case. */
-            base.ceilingText.text(base.maxCeiling + " " + base.options.unit);
+            self.ceilingText.text(self.maxCeiling + " " + self.options.unit);
 
             /* Append raw sample value(s). */
-            base.rawSamples[id].push.apply(base.rawSamples[id], samples);
+            self.rawSamples[id].push.apply(self.rawSamples[id], samples);
 
             /*
              * Scale samples if necessary, and render graph.
@@ -1721,15 +1928,15 @@
             if (needsRedraw) {
                 _redrawChart(true);
             } else {
-                var scaledSamples = base.scaledSamples[id],
-                    scaleFactor = _getInnerHeight() / base.maxCeiling,
+                var scaledSamples = self.scaledSamples[id],
+                    scaleFactor = _getInnerHeight() / self.maxCeiling,
                     buffer = [], s = 0;
                 do {
                     buffer.push(Math.floor(samples[s] * scaleFactor));
                 } while (++s < addCount);
-                base.scaledSamples[id] = scaledSamples.concat(buffer);
+                self.scaledSamples[id] = scaledSamples.concat(buffer);
 
-                _functorRenderSamples(id, buffer, base.scaledSamples[id][Math.max(continueIndex, 0)], sampleCount);
+                _functorRenderSamples(id, buffer, self.scaledSamples[id][Math.max(continueIndex, 0)], sampleCount);
             }
 
             /*
@@ -1741,27 +1948,27 @@
             if ($.isArray(labels) && labels.length) {
                 var s = 0, offset = Math.max(continueIndex + 1, 0);
                 do {
-                    base.sampleLabels[offset + s] = labels[s];
+                    self.sampleLabels[offset + s] = labels[s];
                 } while (++s < labels.length);
             }
 
             /* Determine sample count over all graphs, and scroll to the right edge. */
-            base.sampleCountMax = _getMaxSampleCount();
-            if (base.hasScrollbar) {
+            self.sampleCountMax = _getMaxSampleCount();
+            if (self.hasScrollbar) {
                 _scrollChartTo(100, true);
-            } else if (base.graphClipOffset) {
+            } else if (self.graphClipOffset) {
                 var styles = {
                         clip: "rect("
                                 + "0px"
-                                + " " + (base.options.width + base.graphClipOffset) + "px"
+                                + " " + (self.options.width + self.graphClipOffset) + "px"
                                 + " " + _getInnerHeight() + "px"
-                                + " " + base.graphClipOffset + "px"
+                                + " " + self.graphClipOffset + "px"
                             + ")"
-                      , marginLeft: "-" + base.graphClipOffset + "px"
+                      , marginLeft: "-" + self.graphClipOffset + "px"
                     },
-                    counter = base.graphCount;
+                    counter = self.graphCount;
                 while (counter--) {
-                    base.graphContainer[base.graphIds[counter]].css(styles);
+                    self.graphContainer[self.graphIds[counter]].css(styles);
                 }
             }
         }
@@ -1777,19 +1984,19 @@
         /**
          * Add, rescale and render sample data to the given graph.
          */
-        base.addSamples = function (id, samples, labels) {
+        self.addSamples = function (id, samples, labels) {
             if ($.type(id) == "number" || $.isArray(id)) {
-                if (base.defaultGraph != null) {
+                if (self.defaultGraph != null) {
                     labels = samples;
                     samples = id;
-                    id = base.defaultGraph;
+                    id = self.defaultGraph;
                 } else {
                     throw "Must specify a valid diagram ID as first parameter.";
                 }
             } else if ($.type(id) == "object") {
                 labels = samples;
                 samples = id;
-            } else if (!(id in base.rawSamples)) {
+            } else if (!(id in self.rawSamples)) {
                 throw "Unknown diagram with this ID: " + id;
             }
 
@@ -1808,12 +2015,12 @@
         /**
          * Synchronize this chart to all jquery-zig charts specified by the given selector.
          */
-        base.synchronize = function (selector) {
+        self.synchronize = function (selector) {
             $(selector).each(function (index, element) {
                 var instance = $(this).data("plugin.zig");
                 if (!!instance) {
-                    base.synchronizedTo.push(instance);
-                    instance.synchronizedTo.push(base);
+                    self.synchronizedTo.push(instance);
+                    instance.synchronizedTo.push(self);
                 }
             });
         };
@@ -1822,32 +2029,32 @@
         /**
          * Purge the specified graph, and reset sample data for that graph.
          */
-        base.purge = function (id) {
-            if (!(id in base.config)) {
+        self.purge = function (id) {
+            if (!(id in self.config)) {
                 throw "Must specify a valid diagram ID as first parameter.";
             } else {
-                base.graphContainer[id].find("li").remove();
+                self.graphContainer[id].find("li").remove();
 
                 /* Re-init <canvas> segments. */
-                if ($.prototype.zig.supportsCanvas && base.options.defaultRenderPath == "auto") {
-                    delete base.canvasSegmentContexts[id];
-                    delete base.canvasSegmentWidths[id];
+                if ($.prototype.zig.supportsCanvas && self.options.defaultRenderPath == "auto") {
+                    delete self.canvasSegmentContexts[id];
+                    delete self.canvasSegmentWidths[id];
                 }
 
-                base.rawSamples[id] = [];
-                base.scaledSamples[id] = [];
+                self.rawSamples[id] = [];
+                self.scaledSamples[id] = [];
 
-                base.sampleCountMax = _getMaxSampleCount();
+                self.sampleCountMax = _getMaxSampleCount();
 
-                if (base.graphCount == 1 || !base.sampleCountMax) {
-                    base.graphClipOffset = 0;
-                    base.sampleLabels = [];
+                if (self.graphCount == 1 || !self.sampleCountMax) {
+                    self.graphClipOffset = 0;
+                    self.sampleLabels = [];
 
-                    if (base.options.overflow == "scroll" && base.hasScrollbar) {
+                    if (self.options.overflow == "scroll" && self.hasScrollbar) {
                         _removeScrollbar();
                     }
 
-                    base.ceilingText.text("");
+                    self.ceilingText.text("");
                 }
             }
         };
@@ -1856,43 +2063,43 @@
         /**
          * Purge all graphs in this chart.
          */
-        base.purgeAll = function () {
-            var containers = base.graphContainer, ids = base.graphIds,
-                counter = base.graphCount;
+        self.purgeAll = function () {
+            var containers = self.graphContainer, ids = self.graphIds,
+                counter = self.graphCount;
             while (counter--) {
                 containers[ids[counter]].find("li").remove();
             }
 
             /* Re-init <canvas> segments. */
-            if ($.prototype.zig.supportsCanvas && base.options.defaultRenderPath == "auto") {
-                base.canvasSegmentContexts = {};
-                base.canvasSegmentWidths = {};
+            if ($.prototype.zig.supportsCanvas && self.options.defaultRenderPath == "auto") {
+                self.canvasSegmentContexts = {};
+                self.canvasSegmentWidths = {};
             }
 
-            base.rawSamples = {};
-            base.scaledSamples = {};
+            self.rawSamples = {};
+            self.scaledSamples = {};
 
-            base.sampleCountMax = 0;
+            self.sampleCountMax = 0;
 
-            base.graphClipOffset = 0;
-            base.sampleLabels = [];
+            self.graphClipOffset = 0;
+            self.sampleLabels = [];
 
-            if (base.options.overflow == "scroll" && base.hasScrollbar) {
+            if (self.options.overflow == "scroll" && self.hasScrollbar) {
                 _removeScrollbar();
             }
 
-            base.ceilingText.text("");
+            self.ceilingText.text("");
         };
 
 
         /**
          * Return the smallest sample value in the given graph.
          */
-        base.getStatMin = function (id) {
-            if (!(id in base.rawSamples)) {
+        self.getStatMin = function (id) {
+            if (!(id in self.rawSamples)) {
                 throw "Must specify a valid diagram ID as first parameter.";
             } else {
-                return Math.min.apply(Math, base.rawSamples[id]);
+                return Math.min.apply(Math, self.rawSamples[id]);
             }
         };
         
@@ -1900,11 +2107,11 @@
         /**
          * Return the largest sample value in the given graph.
          */
-        base.getStatMax = function (id) {
-            if (!(id in base.rawSamples)) {
+        self.getStatMax = function (id) {
+            if (!(id in self.rawSamples)) {
                 throw "Must specify a valid diagram ID as first parameter.";
             } else {
-                return Math.max.apply(Math, base.rawSamples[id]);
+                return Math.max.apply(Math, self.rawSamples[id]);
             }
         };
         
@@ -1912,11 +2119,11 @@
         /**
          * Return the arithmetic mean of sample values in the given graph.
          */
-        base.getStatMean = base.getStatArithmeticMean = function (id) {
-            if (!(id in base.rawSamples)) {
+        self.getStatMean = self.getStatArithmeticMean = function (id) {
+            if (!(id in self.rawSamples)) {
                 throw "Must specify a valid diagram ID as first parameter.";
             } else {
-                var samples = base.rawSamples[id], length = samples.length, counter = length, sum = 0;
+                var samples = self.rawSamples[id], length = samples.length, counter = length, sum = 0;
                 while (counter--) {
                     sum += samples[counter];
                 }
@@ -1928,11 +2135,11 @@
         /**
          * Return the geometric mean of sample values in the given graph.
          */
-        base.getStatGeometricMean = function (id) {
-            if (!(id in base.rawSamples)) {
+        self.getStatGeometricMean = function (id) {
+            if (!(id in self.rawSamples)) {
                 throw "Must specify a valid diagram ID as first parameter.";
             } else {
-                var Mlog = Math.log, samples = base.rawSamples[id], length = samples.length, counter = length, log = 0;
+                var Mlog = Math.log, samples = self.rawSamples[id], length = samples.length, counter = length, log = 0;
                 while (counter--) {
                     log += Mlog(samples[counter]);
                 }
@@ -1944,11 +2151,11 @@
         /**
          * Return the median of sample values in the given graph.
          */
-        base.getStatMedian = function (id) {
-            if (!(id in base.rawSamples)) {
+        self.getStatMedian = function (id) {
+            if (!(id in self.rawSamples)) {
                 throw "Must specify a valid diagram ID as first parameter.";
             } else {
-                var samples = base.rawSamples[id].concat().sort(function (a, b) { return a-b; }), 
+                var samples = self.rawSamples[id].concat().sort(function (a, b) { return a - b; }), 
                     length = samples.length;
                 if (length % 2) {
                     return samples[length >>> 1];
@@ -1962,12 +2169,12 @@
         /**
          * Return the variance of sample values in the given graph.
          */
-        base.getStatVariance = function (id) {
-            if (!(id in base.rawSamples)) {
+        self.getStatVariance = function (id) {
+            if (!(id in self.rawSamples)) {
                 throw "Must specify a valid diagram ID as first parameter.";
             } else {
-                var Mpow = Math.pow, samples = base.rawSamples[id], length = samples.length, counter = length, variance = 0,
-                    mean = base.getStatArithmeticMean(id);
+                var Mpow = Math.pow, samples = self.rawSamples[id], length = samples.length, counter = length, variance = 0,
+                    mean = self.getStatArithmeticMean(id);
                 while (counter--) {
                     variance += Math.pow(samples[counter] - mean, 2);
                 }
@@ -1979,11 +2186,11 @@
         /**
          * Return the standard deviation of sample values in the given graph.
          */
-        base.getStatStdDev = function (id) {
-            if (!(id in base.rawSamples)) {
+        self.getStatStdDev = function (id) {
+            if (!(id in self.rawSamples)) {
                 throw "Must specify a valid diagram ID as first parameter.";
             } else {
-                return Math.sqrt(base.getStatVariance(id));
+                return Math.sqrt(self.getStatVariance(id));
             }
         };
         
@@ -1991,7 +2198,7 @@
         /**
          * Return a snapshot of the current chart as an <img>.
          */
-        base.getSnapshot = function () {
+        self.getSnapshot = function () {
             throw "Not implemented yet.";
         };
 
@@ -1999,11 +2206,11 @@
         /**
          * Hide a given graph.
          */
-        base.hideGraph = function (id) {
-            if (!(id in base.graphContainer)) {
+        self.hideGraph = function (id) {
+            if (!(id in self.graphContainer)) {
                 throw "Must specify a valid diagram ID as first parameter.";
             } else {
-                base.graphContainer[id].css("visibility", "hidden");
+                self.graphContainer[id].css("visibility", "hidden");
             }
         };
 
@@ -2011,11 +2218,11 @@
         /**
          * Unhide a given graph.
          */
-        base.unhideGraph = base.showGraph = function (id) {
-            if (!(id in base.graphContainer)) {
+        self.unhideGraph = self.showGraph = function (id) {
+            if (!(id in self.graphContainer)) {
                 throw "Must specify a valid diagram ID as first parameter.";
             } else {
-                base.graphContainer[id].css("visibility", "visible");
+                self.graphContainer[id].css("visibility", "visible");
             }
         };
 
@@ -2023,17 +2230,17 @@
         /**
          * Force redraw of all graphs in this chart.
          */
-        base.redraw = function () {
+        self.redraw = function () {
             _redrawChart(false);
 
-            base.hasScrollbar && _scrollChartTo(100, true);
+            self.hasScrollbar && _scrollChartTo(100, true);
         };
 
 
         /**
          * Scroll all graphs to the given relative position.
          */
-        base.scrollTo = function (percentage) {
+        self.scrollTo = function (percentage) {
             if (!$.type(percentage) == "number") {
                 throw "Must specify a percentage as first parameter.";
             }
@@ -2042,82 +2249,269 @@
             _scrollChartTo(percentage, false);
 
             /* Update scroller position. */
-            base.hasScrollbar && base.scrollbarScroller.css("margin-left", _getScrollerPosition(percentage) + "px");
+            self.hasScrollbar && self.scrollbarScroller.css("margin-left", _getScrollerPosition(percentage) + "px");
 
             /* Update internal scroll position marker. */
-            base.scrollPosition = Math.round(base.scrollMax * percentage / 100);
+            self.scrollPosition = Math.round(self.scrollMax * percentage / 100);
         };
 
 
         /**
          * Highlight selected graphs and update sample readings for these graphs.
          */
-        base.highlightGraphs = function (index, highlightSet, targetOpacity) {
+        self.highlightGraphs = function (index, highlightSet, targetOpacity) {
             _highlightGraphs(index, highlightSet, targetOpacity);
             
-            return base;
+            return self;
         };
         
                     
         /**
          * Hide the vertical grid.
          */
-        base.obscureVerticalGrid = function () {
-            base.options.showVerticalGrid && base.$node.find(".zig-vertical-grid").css("opacity", 0.2);
+        self.obscureVerticalGrid = function () {
+            self.options.showVerticalGrid && self.$node.find(".zig-vertical-grid").css("opacity", 0.2);
         };
 
 
         /**
          * Unhide the vertical grid.
          */
-        base.unobscureVerticalGrid = base.showVerticalGrid = function () {
-            base.options.showVerticalGrid && base.$node.find(".zig-vertical-grid").css("opacity", base.options.verticalGridOpacity);
+        self.unobscureVerticalGrid = self.showVerticalGrid = function () {
+            self.options.showVerticalGrid && self.$node.find(".zig-vertical-grid").css("opacity", self.options.verticalGridOpacity);
         };                    
 
 
         /**
          * Turn on the horizontal cursor in a synchronized chart.
          */
-        base.enableSyncCursor = function () {
-            if (base.cursors == null) {
+        self.enableSyncCursor = function () {
+            if (self.cursors == null) {
                 _renderCrosshairCursor(false, true);
             } else {
-                base.horizontalCrosshairCursor.css({
+                self.horizontalCrosshairCursor.css({
                     "display": "block"
                   , "border-style": "dashed"
                 }); 
             }
             
-            return base;
+            return self;
         };
 
 
         /**
          * Programmatically move the cursor (not the mouse pointer) to the given x-coordinate.
          */
-        base.moveSyncCursorTo = function (x) {
-            base.horizontalCrosshairCursor.css("padding-left", x + "px");
-            base.options.showCoordinates && _updateCoordinate(x, "horizontal");
+        self.moveSyncCursorTo = function (x) {
+            self.horizontalCrosshairCursor.css("padding-left", x + "px");
+            self.options.showCoordinates && _updateCoordinate(x, "horizontal");
             
-            return base;
+            return self;
         };
 
 
         /**
          *  Turn off the horizontal cursor in a synchronized chart.
          */
-        base.disableSyncCursor = function () {
-            base.horizontalCrosshairCursor.css("display", "none");
-            base.options.showCoordinates && base.positionIndex.css("display", "none");
+        self.disableSyncCursor = function () {
+            self.horizontalCrosshairCursor.css("display", "none");
+            self.options.showCoordinates && self.positionIndex.css("display", "none");
             
-            base.horizontalCrosshairCursor.css("border-style", "solid");
+            self.horizontalCrosshairCursor.css("border-style", "solid");
             
-            return base;
+            return self;
         };
+        
+        
+        /**
+         * ...
+         */
+        self.getInnerHeight = function () {
+            return _getInnerHeight();
+        };
+        
+
+        /**
+         * ...
+         */        
+		self.renderChartLegend = function () {
+            if (self.legend !== null) {
+                self.legend.remove();
+            }
+            
+            self.legend = $("<div>", {
+                css: {
+                    position: "absolute"
+                  , zIndex: 20000
+                  , width: (self.options.width - 4) + "px"
+                  , height: "10px"
+                  , top: "4px"
+                  , right: "4px"
+                  , cursor: "default"
+                  , font: $.zig.constants.FONT
+                  , lineHeight: "8px"
+                  , textAlign: "right"
+                }
+            }).appendTo(self.$node);
+            
+            // TODO: really delegate?
+            self.legend.delegate("span", {
+                mouseenter: function (event) {
+                    if (!$(this).data("selected.zig")) {
+                        $(this).css("opacity", 1);
+                    }   
+                }
+              , mouseleave: function (event) {
+                    if (!$(this).data("selected.zig")) {
+                        $(this).css("opacity", 0.2);
+                    }   
+              }
+              // , click: function (event) {}
+            });
+            
+            var counter = -1;
+            while (++counter < self.graphCount) {
+                var id = self.graphIds[counter],
+                    isHighlighted = $.inArray(id, self.highlightSet) != -1;
+                
+                var item = $("<span>", {
+                    css: {
+                        marginLeft: "8px"
+                      , opacity: isHighlighted ? 1 : 0.2
+                      , cursor: isHighlighted ? "default" : "pointer"
+                    }
+                  , data: {
+                      "id.zig": id
+                    , "selected.zig": isHighlighted
+                  }
+                }).appendTo(self.legend);
+                
+                if (isHighlighted) {
+                    $("<samp>", {
+                        css: {
+                            display: "inline-block"
+                          , width: "6px"
+                          , height: "3px"
+                          , border: "1px solid " + self.config[id].lineColor
+                          , borderTopWidth: "4px"
+                          , backgroundColor: self.config[id].lineColor
+                        }
+                    }).appendTo(item);
+                } else {
+                    self.graphContainer[id].css("visibility", "hidden");
+                    
+                    $("<samp>", {
+                        css: {
+                            display: "inline-block"
+                          , width: "6px"
+                          , height: "3px"
+                          , border: "1px solid " + self.config[id].lineColor
+                          , borderTopWidth: "4px"
+                          , backgroundColor: "transparent"
+                        }
+                    }).appendTo(item);
+                }
+                
+                $("<samp>", {
+                    css: {
+                        display: "inline-block"
+                      , paddingLeft: "4px"
+                      , font: $.zig.constants.FONT
+                      , lineHeight: "8px"
+                    }
+                  , text: id
+                }).appendTo(item);
+            }
+            
+            $("<abbr>", {
+                css: {
+                    marginLeft: "16px"
+                  , cursor: "pointer"
+                  , opacity: 0.2
+                }
+              , html: "&times;"
+            }).appendTo(self.legend);
+        };
+        
+        
+		/**
+         * ...
+         */
+        self.renderStatisticsOverlays = function (id) {
+            var mean = self.getStatArithmeticMean(id), stdDev = self.getStatStdDev(id);
+            
+            var innerHeight = self.getInnerHeight(),
+                scaleFactor = innerHeight / self.maxCeiling,
+                scaledMin = Math.floor(self.getStatMin(id) * scaleFactor),
+                scaledMax = Math.ceil(self.getStatMax(id) * scaleFactor),
+                scaledMean = Math.round(mean * scaleFactor),
+                scaledStdDevTop = Math.floor((mean + stdDev) * scaleFactor),
+                scaledStdDevBottom = Math.floor((mean - stdDev) * scaleFactor);                    
+            
+            if (self.overlayRange === null) {
+                self.overlayRange = $("<div>", {
+                    css: {
+                        position: "absolute"
+                      , zIndex: 500
+                      , width: self.options.width + "px"
+                      , height: (scaledMax - scaledMin - 1) + "px"
+                      , backgroundColor: self.config[id].statRangeColor
+                      , marginTop: (innerHeight - scaledMax) + "px"
+                      , borderTop: "1px dotted " + self.config[id].statBoundingColor
+                      , borderBottom: "1px dotted " + self.config[id].statBoundingColor
+                    }
+                }).appendTo(self.$node);    
+            } else {
+                self.overlayRange.css({
+                    height: (scaledMax - scaledMin - 1) + "px"
+                  , marginTop: (innerHeight - scaledMax) + "px"
+                  , backgroundColor: self.config[id].statRangeColor
+                  , borderColor: self.config[id].statBoundingColor
+                });
+            }
+            
+            if (self.overlayStdDev === null) {
+                self.overlayStdDev = $("<div>", {
+                    css: {
+                        position: "absolute"
+                      , zIndex: 501
+                      , width: self.options.width + "px"
+                      , height: (scaledStdDevTop - scaledStdDevBottom) + "px"
+                      , backgroundColor: self.config[id].statDeviationColor
+                      , marginTop: (innerHeight - scaledStdDevTop) + "px"
+                      
+                    }
+                }).appendTo(self.$node);
+            } else {
+                self.overlayStdDev.css({
+                    height: (scaledStdDevTop - scaledStdDevBottom) + "px"
+                  , marginTop: (innerHeight - scaledStdDevTop) + "px"
+                  , backgroundColor: self.config[id].statDeviationColor
+                });
+            }
+            
+            if (self.overlayMean === null) {
+                self.overlayMean = $("<div>", {
+                    css: {
+                        position: "absolute"
+                      , zIndex: 502
+                      , width: self.options.width + "px"
+                      , height: 0
+                      , marginTop: (innerHeight - scaledMean) + "px"
+                      , borderBottom: "1px dashed " + self.config[id].statMeanColor
+                    }
+                }).appendTo(self.$node);
+            } else {
+                self.overlayMean.css({
+                    marginTop: (innerHeight - scaledMean) + "px"
+                  , borderColor: self.config[id].statMeanColor
+                });
+            }                        
+        };        
 
 
         /* Run initializer. */
-        base.__init__();
+        self.__init__();
     };
 
 
@@ -2149,12 +2543,15 @@
 
         /* CSS color code of the crosshair cursor. */
       , crosshairColor: "#000"
+      
+        /* URL of none.cur file (applies only to MSIE) */
+      , msieNoneCursorUrl: ""
 
         /* CSS color code of the coordinate readings. */
       , coordinatesColor: "#000"
 
         /* CSS color code of the ceiling text. */
-      , scaleColor: "#000"
+      , scaleColor: "#000" // TODO: rename to generic term so we can use this for legend as well
 
         /* CSS color for background elements, i.e. the chart will blend with this color. */
       , backgroundColor: "#fff"
@@ -2205,7 +2602,7 @@
      * Internally used constants. Change at your own risk.
      */
     $.zig.constants = {
-        MAGIC: "74E90B05-2A51-46A6-A179-84CDCA6A75BE"
+        MAGIC: "F2093817-A62B-4C5B-9BA6-E16018BDA86E"
       , SCROLLBAR_HEIGHT_BASE: 3
       , FONT: '10px "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif'
       , TEXT_LINE_HEIGHT: 12
@@ -2237,11 +2634,12 @@
      */
     $.prototype.zig = function (options) {
         if ($.type(options) == "string" && options in $.zig) {
-            if (!this.data("plugin.zig")) {
+            var instance = this.data("plugin.zig") || this.parent().data("plugin.zig");
+            if (!instance) {
                 throw "Selected element(s) must be initialized first before calling methods through jQuery.zig";
             } else {
-                var result = this.data("plugin.zig")[options].apply(this, Array.prototype.slice.call(arguments, 1));
-                return (!options.indexOf("getStat")) ? result : this.data("plugin.zig").$node;
+                var result = instance[options].apply(this, Array.prototype.slice.call(arguments, 1));
+                return (!options.indexOf("getStat")) ? result : instance.$node;
             }
         } else if ($.type(options) == "object" || !options) {
             return this.each(function () {
@@ -2252,4 +2650,4 @@
         }
     };
 
-})(jQuery);
+}(jQuery);
