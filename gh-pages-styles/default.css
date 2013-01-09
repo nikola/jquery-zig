@@ -37,7 +37,7 @@ body {
     height: 48px;
     z-index: 30000;
     
-    background-color: #943848;
+    background-color: #3d78cc;
     
     opacity: 0.9;
     -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=90)";
@@ -65,7 +65,7 @@ body {
 
 #wrapper-bottom {
     background-color: #c4c7cb;
-    height: 28px;
+    height: 36px;
     border-top: 4px solid #99a19d;
     min-width: 1024px;
     overflow: hidden;
@@ -80,7 +80,7 @@ body {
     }
 
 #masthead {
-    color: #e0f0e8;
+    color: white;
     font-size: 18px;
     line-height: 48px;
     }
@@ -96,12 +96,11 @@ body {
     }
     
 #menu a, #menu a:link, #menu a:visited {
-    color: #e0f0e8;
+    color: white !important;
     text-decoration: none;
     }    
     
 #menu a:hover, #menu a:active {
-    color: #c9c7ce;
     text-decoration: underline;
     }     
     
@@ -112,7 +111,7 @@ body {
 #footer {
     color: #444;
     font-size: 12px;
-    line-height: 28px;
+    line-height: 36px;
     }    
 
 /*
@@ -126,7 +125,7 @@ a[name] {
     padding-bottom: 8px;
     margin-bottom: 4px;
     margin-top: 32px;
-    color: #841828;
+    color: #2d5a99;
     }
 
 a[name]:before {
@@ -162,7 +161,7 @@ blockquote {
     color: #000;
     margin: 4px 0 14px 0;
     padding: 6px 0 6px 8px;
-    font: 12px/20px Monaco, "Lucida Console", monospace;
+    font: 11px/20px Monaco, "Lucida Console", monospace;
     }
 
 pre.license { 
@@ -178,8 +177,8 @@ ul {
     
 li a, li a[href]:link, li a[href]:visited, dd a, dd a[href]:link, dd a[href]:visited {
     font: 13px/24px "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
-    color: #703040;
-    border-bottom: 1px dotted #716d6f;
+    color: #333;
+    border-bottom: 1px dotted #333;
     text-decoration: none;
     }        
 
@@ -200,6 +199,7 @@ dt {
     background-color: #e1e1e1;
     font-weight: bold;
     padding:  0 6px;
+    font: 11px/20px Monaco, "Lucida Console", monospace;
     }    
     
 dd {
@@ -217,7 +217,7 @@ dd {
     }
 
 .demo-chart-container-side-by-side {
-    margin: 8px 0 16px 112px;
+    margin: 16px 0 16px 112px;
     }
 
 .demo-chart-multi {
